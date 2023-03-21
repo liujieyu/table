@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.table.mapper.StHpCMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.example.table.entity.StHpC">
+        <id column="ID" property="id" />
+        <result column="STNM" property="stnm" />
+        <result column="STCD" property="stcd" />
+        <result column="DT" property="dt" />
+        <result column="TM" property="tm" />
+        <result column="P" property="p" />
+        <result column="PRCD" property="prcd" />
+    </resultMap>
+    <sql id="Base_Column_List" >
+        id,stnm,stcd,dt,tm,p
+    </sql>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+        select
+        <include refid="Base_Column_List" />
+        from ST_HP_C
+        where id = #{id,jdbcType=INTEGER}
+    </select>
+</mapper>

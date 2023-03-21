@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.table.mapper.StGateDdMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.example.table.entity.StGateDd">
+        <result column="ID" property="id" />
+        <result column="DLTYPE" property="dltype" />
+        <result column="Z" property="z" />
+        <result column="DL_KD" property="dlKd" />
+        <result column="DL_Q" property="dlQ" />
+        <result column="XH_KD" property="xhKd" />
+        <result column="XH_Q" property="xhQ" />
+        <result column="SUM_Q" property="sumQ" />
+        <result column="DLKDNAME" property="dlkdname" />
+        <result column="XHKDNAME" property="xhkdname" />
+        <result column="RowId" property="rowId" />
+    </resultMap>
+    <!--泄洪信息总记录数-->
+    <select id="selectStGateDdByCount" parameterType="com.example.table.entity.AlarmParam" resultType="java.lang.Integer">
+    select count(*) from ST_GATE_DD where DLTYPE=#{sign}
+    </select>
+    <!--泄洪信息分页查询-->
+    <select id="selectStGateDdByPage" parameterType="com.example.table.entity.AlarmParam" resultMap="BaseResultMap">
+    select * from
+    (select Z,case DL_KD when 0 then '闸门不开启' when 4.1 then '全开' else CONVERT(varchar(5),DL_KD) end as DLKDNAME,DL_Q,case XH_KD when 0 then '闸门不开启' when 4.1 then '全开' else CONVERT(varchar(5),XH_KD) end as XHKDNAME,XH_Q,SUM_Q, ROW_NUMBER() OVER(Order by z) AS RowId
+    from ST_GATE_DD where DLTYPE=#{sign}) b where b.RowId between #{begincount} and #{endcount}
+    </select>
+    <!--泄洪信息图形数据-->
+    <select id="selectStGateDdByType" parameterType="com.example.table.entity.AlarmParam" resultMap="BaseResultMap">
+        select * from ST_GATE_DD where DLTYPE=#{sign} order by z
+    </select>
+</mapper>

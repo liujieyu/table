@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.table.mapper.StRealMefileMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.example.table.entity.StRealMefile">
+        <result column="ID" property="id" />
+        <result column="TM" property="tm" />
+        <result column="ME_CODE" property="meCode" />
+        <result column="FILE_NAME" property="fileName" />
+        <result column="UP_MAN" property="upMan" />
+        <result column="SAVE_PATH" property="savePath" />
+        <result column="ME_MAN" property="meMan" />
+        <result column="AUDINTING" property="audinting" />
+        <result column="AUDI_MAN" property="audiMan" />
+        <result column="AUDI_TM" property="audiTm" />
+        <result column="MEMO" property="memo" />
+        <result column="ME_TM" property="meTm" />
+        <result column="TMSTR" property="tmstr" />
+        <result column="ME_TMSTR" property="meTmstr" />
+        <result column="RESULT" property="result" />
+        <result column="RowId" property="rowId" />
+    </resultMap>
+    <!--测量数据详情-->
+    <resultMap id="MedataResultMap" type="com.example.table.entity.StRealMedata">
+        <result column="ID" property="id" />
+        <result column="ME_CODE" property="meCode" />
+        <result column="ME_TM" property="meTm" />
+        <result column="STCD" property="stcd" />
+        <result column="STNM" property="stnm" />
+        <result column="CANAL_CODE" property="canalCode" />
+        <result column="Z" property="z" />
+        <result column="Q" property="q" />
+        <result column="MEMO" property="memo" />
+        <result column="CANAL_NAME" property="canalName" />
+        <result column="ME_TMSTR" property="meTmstr" />
+        <result column="RowId" property="rowId" />
+    </resultMap>
+    <!--率定数据上传信息总记录数-->
+    <select id="selectStRealMefileCount" parameterType="com.example.table.entity.MedataParam" resultType="java.lang.Integer">
+        select count(*) count from ST_REAL_MEFILE
+        where tm between #{begintime} and #{endtime}
+        <if test="audinting !=null &amp;&amp; audinting!=0 ">
+            and AUDINTING=#{audinting}
+        </if>
+        <if test="meMan !=null &amp;&amp; meMan !='' ">
+            and ME_MAN like '%'+#{meMan}+'%'
+        </if>
+    </select>
+    <!--率定数据上传信息分页查询-->
+    <select id="selectStRealMefileByPage" parameterType="com.example.table.entity.MedataParam" resultMap="BaseResultMap">
+        select * from (select ID,ME_CODE,CONVERT(varchar,datepart(yy,TM))+'年'+RIGHT('0'+CONVERT(varchar(2),datepart(mm,TM)),2)+'月'+RIGHT('0'+CONVERT(varchar(2),datepart(dd,TM)),2)+'日' as TMSTR,
+        FILE_NAME,UP_MAN,SAVE_PATH,CONVERT(varchar,datepart(yy,ME_TM))+'年'+RIGHT('0'+CONVERT(varchar(2),datepart(mm,ME_TM)),2)+'月'+RIGHT('0'+CONVERT(varchar(2),datepart(dd,ME_TM)),2)+'日' as ME_TMSTR,
+        ME_MAN,AUDINTING,case AUDINTING when 1 then '未审核' when 2 then '审核通过' when 3 then '作废' end as RESULT,AUDI_MAN,
+        ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId
+        from ST_REAL_MEFILE
+        where tm between #{begintime} and #{endtime}
+        <if test="audinting !=null &amp;&amp; audinting!=0 ">
+            and AUDINTING=#{audinting}
+        </if>
+        <if test="meMan !=null &amp;&amp; meMan !='' ">
+            and ME_MAN like '%'+#{meMan}+'%'
+        </if>
+        ) as b where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--根据测量编码查询率定数据上传信息-->
+    <select id="selectStRealMefileByMecode" parameterType="com.example.table.entity.MedataParam" resultMap="BaseResultMap">
+        select CONVERT(varchar,datepart(yy,TM))+'年'+RIGHT('0'+CONVERT(varchar(2),datepart(mm,TM)),2)+'月'+RIGHT('0'+CONVERT(varchar(2),datepart(dd,TM)),2)+'日' as TMSTR,
+        UP_MAN,ME_MAN,case AUDINTING when 1 then '未审核' when 2 then '审核通过' when 3 then '作废' end as RESULT,MEMO from ST_REAL_MEFILE where ME_CODE=#{meCode}
+    </select>
+    <!--率定数据上传信息详情总记录数-->
+    <select id="selectStRealMedataCount" parameterType="com.example.table.entity.MedataParam" resultType="java.lang.Integer">
+        select count(*) from ST_REAL_MEDATA s where ME_CODE=#{meCode}
+    </select>
+    <!--率定数据上传信息详情-->
+    <select id="selectStRealMedataDetail" parameterType="com.example.table.entity.MedataParam" resultMap="MedataResultMap">
+        select * from (select CONVERT(varchar(10),ME_TM,120) as ME_TMSTR,STCD,(select STNM from ST_STBPRP_B b where b.STCD=s.STCD) as STNM,(select Canal_Name from WRP_IrrBTCanalSystem w where w.Canal_Code=s.CANAL_CODE) as CANAL_NAME,Z,Q,MEMO,ROW_NUMBER() OVER(Order by stcd,me_tm) AS RowId from ST_REAL_MEDATA s
+        where ME_CODE=#{meCode}) as b  where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--新增率定数据上传信息-->
+    <insert id="insertStRealMefile" parameterType="com.example.table.entity.MedataParam">
+        insert into ST_REAL_MEFILE(TM,ME_CODE,FILE_NAME,UP_MAN,ME_MAN,ME_TM,AUDINTING,MEMO)
+        values(#{tm},#{meCode},#{fileName},#{upMan},#{meMan},#{meTm},#{audinting},#{memo})
+    </insert>
+    <!--修改率定数据上传信息-->
+    <update id="updateStRealMefile" parameterType="com.example.table.entity.MedataParam">
+        update ST_REAL_MEFILE set AUDINTING=#{audinting},AUDI_MAN=#{audiMan},AUDI_TM=#{audiTm} where ME_CODE=#{meCode}
+    </update>
+    <!--新增率定数据上传信息详情-->
+    <insert id="insertStRealMedata" parameterType="java.util.List">
+        insert into ST_REAL_MEDATA(ME_CODE,ME_TM,STCD,STNM,CANAL_CODE,Z,Q)values
+        <foreach collection="list" index="index" item="item" separator=",">
+        (#{item.meCode},#{item.meTm},#{item.stcd},#{item.stnm},#{item.canalCode},#{item.z},#{item.q})
+        </foreach>
+    </insert>
+    <!--判断文件是否存在-->
+    <select id="checkMefileExist" parameterType="com.example.table.entity.MedataParam" resultType="java.lang.Integer">
+        select 1 from ST_REAL_MEFILE where FILE_NAME=#{fileName}
+    </select>
+    <!--插入到率定结果表中-->
+    <insert id="insertLdresult" parameterType="com.example.table.entity.MedataParam">
+        insert into ST_ZQRL_B(STCD,STNM,YR,Z,Q)
+        select STCD,STNM,datepart(yy,ME_TM) as yr,z,q from ST_REAL_MEDATA where ME_CODE=#{meCode}
+    </insert>
+    <!--获取上传编码-->
+    <select id="selectMaxMecode" resultType="java.lang.String">
+        select MAX(ME_CODE) from ST_REAL_MEFILE where ME_CODE like #{meCode}+'%'
+    </select>
+</mapper>
