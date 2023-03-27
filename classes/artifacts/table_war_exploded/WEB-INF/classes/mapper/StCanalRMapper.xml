@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.table.mapper.StCanalRMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="StCanalRResultMap" type="com.example.table.pojo.StChanalR">
+        <result column="ID" property="id" />
+        <result column="STCD" property="stcd" />
+        <result column="STNM" property="stnm" />
+        <result column="TM" property="tm" />
+        <result column="Q" property="q" />
+        <result column="Z" property="z" />
+        <result column="WPTN" property="wptn" />
+        <result column="RowId" property="index" />
+    </resultMap>
+
+    <!--查询实时监测数据-->
+    <select id="selectStCanalR1Info" parameterType="com.example.table.pojo.WaterParam" resultMap="StCanalRResultMap">
+        select b.STCD,b.STNM,Convert(varchar(16),r.TM,120) as TM,r.Q,r.Z,WPTN,ROW_NUMBER() OVER(Order by b.PX asc) AS RowId from
+        (select * from WATER_SITE_B where SYSSIGN=#{showsign}) b inner join ST_Canal_R1 r on b.STCD=r.STCD
+        where b.STNM like '%'+#{stnm}+'%'
+    </select>
+    <!--查询监测历史数据总记录数-->
+    <select id="selectStCanalHistoryByCount" parameterType="com.example.table.pojo.WaterParam" resultType="java.lang.Integer">
+        select count(*) from ST_Canal_R
+        <where>
+            <if test="stcd!= null and stcd!= ''">
+                STCD = #{stcd}
+            </if>
+            <if test="begintime!= null and begintime!= ''and endtime!= null and endtime!= ''">
+                and TM &gt;= '${begintime}' and TM &lt;='${endtime}'
+            </if>
+        </where>
+    </select>
+    <!--分页查询监测历史数据-->
+    <select id="selectStCanalHistoryByPage" parameterType="com.example.table.pojo.WaterParam" resultMap="StCanalRResultMap">
+        select * from (select CONVERT(varchar(16), TM, 120) as TM,Q,Z,STNM,case WPTN when 4 then '↓' when 5 then '↑' else '一'end as WPTN, ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId
+        from ST_Canal_R
+        <where>
+            <if test="stcd!= null and stcd!= ''">
+                STCD = #{stcd}
+            </if>
+            <if test="begintime!= null and begintime!= ''and endtime!= null and endtime!= ''">
+                and TM &gt;= '${begintime}' and TM &lt;='${endtime}'
+            </if>
+        </where>
+        )as b where RowId between #{begincount} and #{endcount}
+    </select>
+</mapper>

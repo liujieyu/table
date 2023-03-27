@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.table.mapper.StStratingMMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.example.table.entity.StStratingM">
+        <result column="ID" property="id" />
+        <result column="STCD" property="stcd" />
+        <result column="STNM" property="stnm" />
+        <result column="Canal_Code" property="canalCode" />
+        <result column="Canal_Name" property="canalName" />
+        <result column="Canal_Coordinate" property="canalCoordinate" />
+        <result column="ME_TYPE" property="meType" />
+        <result column="BEGIN_SIGN" property="beginSign" />
+        <result column="BTM" property="btm" />
+        <result column="ETM" property="etm" />
+        <result column="RS_COUNT" property="rsCount" />
+        <result column="END_COUNT" property="endCount" />
+        <result column="Postion" property="Postion" />
+        <result column="MEMO" property="memo" />
+        <result column="ZD_SIGN" property="zd_sign" />
+        <result column="TYPE_NM" property="type_nm" />
+    </resultMap>
+    <resultMap id="MaxZhibiaoMap" type="com.example.table.entity.StStsectionStation">
+        <result column="ID" property="id" />
+        <result column="STCD" property="stcd" />
+        <result column="STNM" property="stnm" />
+        <result column="CANAL_CODE" property="canalCode" />
+        <result column="B" property="b" />
+        <result column="M" property="m" />
+        <result column="N" property="n" />
+        <result column="I" property="i" />
+        <result column="TYPES" property="types" />
+        <result column="MAX_Z" property="maxZ" />
+        <result column="MAX_Q" property="maxQ" />
+        <result column="FORMULA" property="formula" />
+        <result column="MODEL" property="model" />
+        <result column="SLTP" property="sltp" />
+        <result column="GTHLNTWD" property="gthlntwd" />
+        <result column="GATE_HI" property="gateHi" />
+        <result column="Z_MAX_F" property="zMaxF" />
+        <result column="Q_MAX_F" property="qMaxF" />
+        <result column="Z_MAX_B" property="zMaxB" />
+        <result column="Q_MAX_B" property="qMaxB" />
+    </resultMap>
+    <resultMap id="LdResultInfoMap" type="com.example.table.entity.StZqrlB">
+        <id column="ID" property="id" />
+        <result column="STNM" property="stnm" />
+        <result column="STCD" property="stcd" />
+        <result column="YR" property="yr" />
+        <result column="Z" property="z" />
+        <result column="Q" property="q" />
+        <result column="FLAG" property="flag" />
+        <result column="MEMO" property="memo" />
+    </resultMap>
+    <!--查询所有站点-->
+    <select id="selectStStratingMAll" resultMap="BaseResultMap" parameterType="com.example.table.entity.LvDingParam">
+        select STCD,STNM,Canal_Code,Canal_Name,ME_TYPE,1 ZD_SIGN,case ME_TYPE when 1 then '标准断面' when 2 then '巴歇尔槽' when 3 then '水闸' when 4 then '管道' end as TYPE_NM
+        from ST_STRATING_M
+        <if test="stnm!=null &amp;&amp; stnm !=''">
+            where STNM like '%'+#{stnm}+'%'
+        </if>
+    </select>
+    <!--根据stcd查询最大水深和最大流量-->
+    <select id="selectBzdmMaxByStcd" resultMap="MaxZhibiaoMap" parameterType="com.example.table.entity.LvDingParam">
+        select MAX_Z,MAX_Q,B,M,N,I,TYPES,10 as RowId from ST_STSECTION_STATION where YR=#{year} and STCD=#{stcd}
+        union all
+        select top 1 MAX_Z,MAX_Q,B,M,N,I,TYPES,ROW_NUMBER() OVER(Order by YR desc) AS RowId from ST_STSECTION_STATION where YR&lt;#{year} and STCD=#{stcd}
+    </select>
+    <select id="selectBxecMaxByStcd" resultMap="MaxZhibiaoMap" parameterType="com.example.table.entity.LvDingParam">
+        select Z_MAX as MAX_Z,Q_MAX as MAX_Q,MODEL from ST_PAR_STATION where STCD=#{stcd}
+    </select>
+    <select id="selectSzMaxByStcd" resultMap="MaxZhibiaoMap" parameterType="com.example.table.entity.LvDingParam">
+        select SLTP,GTHLNTWD,GATE_HI,Z_MAX_F,Q_MAX_F,Z_MAX_B,Q_MAX_B from ST_Gate_Station where STCD=#{stcd}
+    </select>
+    <select id="selectParshallflume" resultType="java.util.Map" parameterType="com.example.table.entity.LvDingParam">
+        select C,N1 from ST_PARSHALL_FLUME where MODEL=#{model}
+    </select>
+    <!--查询列表-->
+    <select id="selectSteqrlBList" resultMap="LdResultInfoMap" parameterType="com.example.table.entity.LvDingParam">
+        select ID,Z,Q from ST_ZQRL_B where STCD=#{stcd} and YR=#{year} order by Z
+    </select>
+    <!--新增-->
+    <insert id="insertSteqrlB" parameterType="com.example.table.entity.LvDingParam">
+        insert into ST_ZQRL_B(STNM,STCD,YR,Z,Q) values(#{stnm},#{stcd},#{year},#{z},#{q})
+    </insert>
+    <!--修改-->
+    <update id="updateSteqrlB" parameterType="com.example.table.entity.LvDingParam">
+        update ST_ZQRL_B set Z=#{z},Q=#{q} where ID=#{id}
+    </update>
+    <!--删除-->
+    <delete id="deletesTeqrlB" parameterType="com.example.table.entity.LvDingParam">
+        delete from ST_ZQRL_B where ID=#{id}
+    </delete>
+    <!--查询详情-->
+    <select id="selectTeqrlBById" parameterType="com.example.table.entity.LvDingParam">
+        select STCD,STNM,YR,Z,Q from ST_ZQRL_B where ID=#{id}
+    </select>
+    <!--修改糙率-->
+    <update id="updateCl" parameterType="com.example.table.entity.LvDingParam">
+        update ST_STSECTION_STATION set N=#{n} where STCD=#{stcd} and YR=#{year}
+    </update>
+    <!--判断率定结果是否存在-->
+    <select id="selectResultByExist" parameterType="com.example.table.entity.LvDingParam" resultType="java.lang.Integer">
+        select count(*) count from ST_ZQRL_B where stcd=#{stcd} and yr=#{year} and z=#{z}
+    </select>
+    <!--获取率定站点编码和名称-->
+    <select id="selectStStratingMByCdAndNm" resultMap="LdResultInfoMap">
+        select STCD,STNM from ST_STRATING_M order by STCD
+    </select>
+    <!--判断站点对应编号是否正确-->
+    <select id="selectStcdStStratingMByStnm" parameterType="com.example.table.entity.LvDingParam" resultType="java.lang.Integer">
+        select count(*) from ST_STRATING_M where STCD=#{stcd} and STNM=#{stnm}
+    </select>
+    <!--判断该年份的率定结果信息是否存在-->
+    <select id="selectResultByStcdAndYear" parameterType="com.example.table.entity.LvDingParam" resultType="java.lang.Integer">
+        select count(*) from ST_ZQRL_B where STCD=#{stcd} and YR=#{year}
+    </select>
+    <!--批量新增率定结果信息-->
+    <insert id="insertSteqrlBObjs">
+        insert into ST_ZQRL_B(STNM,STCD,YR,Z,Q) VALUES
+        <foreach collection="ldresults" item="ldresult" separator=",">
+            (#{ldresult.stnm},#{ldresult.stcd},#{ldresult.yr},#{ldresult.z},#{ldresult.q})
+        </foreach>
+    </insert>
+</mapper>

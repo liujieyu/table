@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.table.mapper.StNeedwaterPlanMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.example.table.entity.StNeedwaterPlan">
+        <result column="ID" property="id" />
+        <result column="STCD" property="stcd" />
+        <result column="STNM" property="stnm" />
+        <result column="Canal_Code" property="canalCode" />
+        <result column="Canal_Name" property="canalName" />
+        <result column="YR" property="yr" />
+        <result column="ONE" property="one" />
+        <result column="TWO" property="two" />
+        <result column="THREE" property="three" />
+        <result column="FOUR" property="four" />
+        <result column="FIVE" property="five" />
+        <result column="SIX" property="six" />
+        <result column="SEVEN" property="seven" />
+        <result column="EIGHT" property="eight" />
+        <result column="NINE" property="nine" />
+        <result column="TEN" property="ten" />
+        <result column="ELEVEN" property="eleven" />
+        <result column="TWELVE" property="twelve" />
+        <result column="SUMW" property="sumw" />
+        <result column="UP_MAN" property="upMan" />
+        <result column="UP_DT" property="upDt" />
+        <result column="AU_MAN" property="auMan" />
+        <result column="AU_DT" property="auDt" />
+        <result column="MEMO" property="memo" />
+        <result column="Organ_Code" property="organCode" />
+        <result column="Organ_Name" property="organName" />
+    </resultMap>
+    <resultMap id="ManageInstitutionMap" type="com.example.table.entity.WrpIrrbsmanageinstitution">
+        <id column="Organ_Code" property="organCode" />
+        <result column="ID" property="id" />
+        <result column="Organ_Name" property="organName" />
+        <result column="TYPES" property="types" />
+        <result column="Canal_Code" property="canalCode" />
+        <result column="Canal_Name" property="canalName" />
+    </resultMap>
+<select id="selectWaterPlan" parameterType="com.example.table.entity.LvDingParam" resultMap="BaseResultMap">
+select t.Organ_Code,t.Organ_Name,T.TYPES,u.Canal_Name,p.Canal_Code,isnull(ONE,0) ONE,isnull(TWO,0) TWO,isnull(THREE,0) THREE,isnull(FOUR,0) FOUR,isnull(FIVE,0) FIVE,isnull(SIX,0) SIX,isnull(SEVEN,0) SEVEN,isnull(EIGHT,0) EIGHT,isnull(NINE,0) NINE,isnull(TEN,0) TEN,isnull(ELEVEN,0) ELEVEN,isnull(TWELVE,0) TWELVE,isnull(SUMW,0) SUMW from
+(select Organ_Code,Organ_Name,TYPES from WRP_IrrBSManageInstitution
+<if test="organCode !=null &amp;&amp; organCode!=''">
+where Organ_Code=#{organCode}
+</if>
+) t inner join WRP_UnitByCanal u on t.TYPES=2 and t.TYPES=u.TYPES and  t.Organ_Code=u.Organ_Code
+inner join (select Canal_Code,YR,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,TEN,ELEVEN,TWELVE,SUMW from ST_NEEDWATER_PLAN where YR=#{year}) p on u.Canal_Code=p.Canal_Code
+order by Organ_Code,p.Canal_Code
+</select>
+
+<select id="selectGljgInfo" resultType="java.util.Map">
+    select Organ_Code as value,Organ_Name as label,TYPES as type from WRP_IrrBSManageInstitution where TYPES in (${types}) order by TYPES,Organ_Code
+</select>
+    
+ <!--用水定额计划-->
+<select id="selectWaterquota"  parameterType="com.example.table.entity.LvDingParam" resultMap="BaseResultMap">
+select t.*,u.Canal_Name,isnull(ONE,0) ONE,isnull(TWO,0) TWO,isnull(THREE,0) THREE,isnull(FOUR,0) FOUR,isnull(FIVE,0) FIVE,isnull(SIX,0) SIX,isnull(SEVEN,0) SEVEN,isnull(EIGHT,0) EIGHT,isnull(NINE,0) NINE,isnull(TEN,0) TEN,isnull(ELEVEN,0) ELEVEN,isnull(TWELVE,0) TWELVE,isnull(SUMW,0) SUMW from
+(select Organ_Code,Organ_Name,TYPES from WRP_IrrBSManageInstitution where TYPES in(3,5)
+    <if test="organCode !=null &amp;&amp; organCode!=''">
+        and Organ_Code=#{organCode}
+    </if>
+) t
+inner join WRP_UnitByCanal u on t.TYPES=u.TYPES
+inner join (select Canal_Code,YR,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,TEN,ELEVEN,TWELVE,SUMW from ST_WaterQuota where YR=#{year}) w on u.Canal_Code=w.Canal_Code
+order by TYPES,Organ_Code,w.Canal_Code
+</select>
+<!--支渠用水管理-->
+<select id="selectUsewaterByCanalcode" parameterType="com.example.table.entity.LvDingParam" resultMap="BaseResultMap">
+select '0' MEMO,ONE,TWO,THREE,FOUR,FIVE,SIX,SEVEN,EIGHT,NINE,TEN,ELEVEN,TWELVE,SUMW from ST_WaterQuota where YR=#{year} and Canal_Code=#{organCode}
+union all
+SELECT '1' MEMO,MAX(CASE MON WHEN 1 THEN Convert(decimal(18,3),Convert(decimal(18,3),MWQ/10000)) ELSE 0 END) AS ONE,
+	MAX(CASE MON WHEN 2 THEN Convert(decimal(18,3),MWQ/10000) ELSE 0 END) AS TWO,
+	MAX(CASE MON WHEN 3 THEN Convert(decimal(18,3),MWQ/10000) ELSE 0 END) AS THREE,
+	MAX(CASE MON WHEN 4 THEN Convert(decimal(18,3),MWQ/10000) ELSE 0 END) AS FOUR,
+	MAX(CASE MON WHEN 5 THEN Convert(decimal(18,3),MWQ/10000) ELSE 0 END) AS FIVE,
+	MAX(CASE MON WHEN 6 THEN Convert(decimal(18,3),MWQ/10000) ELSE 0 END) AS SIX,
+	MAX(CASE MON WHEN 7 THEN Convert(decimal(18,3),MWQ/10000) ELSE 0 END) AS SEVEN,
+	MAX(CASE MON WHEN 8 THEN Convert(decimal(18,3),MWQ/10000) ELSE 0 END) AS EIGHT,
+	MAX(CASE MON WHEN 9 THEN Convert(decimal(18,3),MWQ/10000) ELSE 0 END) AS NINE,
+    MAX(CASE MON WHEN 10 THEN Convert(decimal(18,3),MWQ/10000) ELSE 0 END) AS TEN,
+    MAX(CASE MON WHEN 11 THEN Convert(decimal(18,3),MWQ/10000) ELSE 0 END) AS ELEVEN,
+	MAX(CASE MON WHEN 12 THEN Convert(decimal(18,3),MWQ/10000) ELSE 0 END) AS TWELVE,
+	Convert(decimal(18,3),SUM(MWQ/10000)) AS SUMW
+FROM ST_MCanal_C c WHERE YR=#{year} and STCD=(select top 1 STCD from ST_STINFO_WRP where FormID='WRP_IrrBTCanalSystem' and BaseID=#{organCode})
+GROUP BY STCD
+</select>
+<!--管理所-渠道树形数据-->
+<select id="selectOrganCanalTree" parameterType="com.example.table.entity.LvDingParam" resultMap="ManageInstitutionMap">
+select Organ_Code,Organ_Name,TYPES,null as Canal_Code,null as Canal_Name from WRP_IrrBSManageInstitution where TYPES=1
+union all
+select t.Organ_Code,t.Organ_Name,t.TYPES,u.Canal_Code,u.Canal_Name from (select * from WRP_IrrBSManageInstitution where TYPES in(3,5)) t inner join WRP_UnitByCanal u on t.TYPES=u.TYPES
+<if test="canalname !=null &amp;&amp; canalname!=''">
+where Canal_Name like '%'+#{canalname}+'%'
+</if>
+order by TYPES,Organ_Code,Canal_Code
+</select>
+</mapper>

@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.table.mapper.StAlarminfoMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.example.table.entity.StAlarminfo">
+        <result column="ID" property="id" />
+        <result column="STNM" property="stnm" />
+        <result column="STCD" property="stcd" />
+        <result column="Alarm" property="Alarm" />
+        <result column="TM" property="tm" />
+        <result column="TMSTR" property="tmstr" />
+        <result column="CONTENTS" property="contents" />
+        <result column="MV" property="mv" />
+        <result column="AlarmV" property="AlarmV" />
+        <result column="MEMO" property="memo" />
+        <result column="SENDSIGN" property="sendsign" />
+        <result column="TYPENAME" property="typename" />
+        <result column="ADNM" property="adnm" />
+        <result column="RowId" property="rowid" />
+        <result column="ALARMNAME" property="alarmname" />
+        <result column="SIGNNAME" property="signname" />
+    </resultMap>
+    <!-- 降雨预警指标查询映射结果 -->
+    <resultMap id="StPpAlarmResultMap" type="com.example.table.entity.StPpAlarm">
+        <id column="ID" property="id" />
+        <result column="RowId" property="rowid" />
+        <result column="STNM" property="stnm" />
+        <result column="STCD" property="stcd" />
+        <result column="EWL" property="ewl" />
+        <result column="EWLNAME" property="ewlname"/>
+        <result column="PTD_P" property="ptdP" />
+        <result column="OH_P" property="ohP" />
+        <result column="TH_P" property="thP" />
+        <result column="SH_P" property="shP" />
+        <result column="TWH_P" property="twhP" />
+        <result column="OD_P" property="odP" />
+        <result column="MEMO" property="memo" />
+    </resultMap>
+    <!-- 水库水位预警指标查询映射结果 -->
+    <resultMap id="StRsvAlarmResultMap" type="com.example.table.entity.StRsvAlarm">
+        <id column="ID" property="id" />
+        <result column="RowId" property="rowid" />
+        <result column="STNM" property="stnm" />
+        <result column="STCD" property="stcd" />
+        <result column="SWL" property="swl" />
+        <result column="FWL" property="fwl" />
+        <result column="FWL79" property="fwl79" />
+        <result column="ZCWL" property="zcwl" />
+        <result column="SJWL" property="sjwl" />
+        <result column="XHWL" property="xhwl" />
+        <result column="BDGC" property="bdgc" />
+        <result column="JYWL" property="jywl" />
+        <result column="MEMO" property="memo" />
+    </resultMap>
+    <!-- 河道水位预警指标查询映射结果 -->
+    <resultMap id="StRiverAlarmResultMap" type="com.example.table.entity.StRiverAlarm">
+        <id column="ID" property="id" />
+        <result column="RowId" property="rowid" />
+        <result column="STNM" property="stnm" />
+        <result column="STCD" property="stcd" />
+        <result column="AWL" property="awl" />
+        <result column="BZWL" property="bzwl" />
+        <result column="SJWL" property="sjwl" />
+        <result column="XHWL" property="xhwl" />
+        <result column="JYWL" property="jywl" />
+        <result column="MEMO" property="memo" />
+    </resultMap>
+    <sql id="Alarm_Adcd_Xian">
+    (select case ad_lv when 5 then AD_NM when 6 then (select AD_NM from WRP_AD_B sub where sub.ad_cd=m.UP_ADCD)+AD_NM end from WRP_AD_B m where AD_CD=ADDVCD) as ADNM
+    </sql>
+    <sql id="Alarm_Adcd_Shi">
+    (select case ad_lv when 4 then AD_NM when 5 then (select AD_NM from WRP_AD_B sub where sub.ad_cd=m.UP_ADCD)+AD_NM when 6 then (select  (select AD_NM from WRP_AD_B sub2 where sub2.AD_CD=sub.UP_ADCD)+AD_NM from WRP_AD_B sub where sub.ad_cd=m.UP_ADCD)+AD_NM end from WRP_AD_B m where AD_CD=ADDVCD) as ADNM
+    </sql>
+    <!--站点预警信息统计-->
+    <select id="selectWarmInfoByCount" parameterType="com.example.table.entity.AlarmParam" resultType="java.lang.Integer">
+        select count(*) as count from ST_AlarmInfo a inner join ST_STBPRP_B b on a.STCD=b.STCD
+        where tm &gt;= CONVERT(datetime,'${begintime}',120) and tm &lt;= CONVERT(datetime,'${endtime}',120)
+        <if test="adcd != null">
+            and b.ADDVCD like #{adcd}+'%'
+        </if>
+        <if test="alarmlevel !=null &amp;&amp; alarmlevel > 0">
+            and a.Alarm=#{alarmlevel}
+        </if>
+        <if test="sitename != null">
+            and b.STNM like '%'+#{sitename}+'%'
+        </if>
+    </select>
+    <!--分页查询站点预警信息-->
+    <select id="selectWarmInfoByPage" parameterType="com.example.table.entity.AlarmParam" resultMap="BaseResultMap">
+        select * from (select a.STCD,b.STNM,convert(varchar(19),tm,120) as TMSTR,(select FieldName from WRP_FieldInfo where FormID='ST_AlarmInfo' and FieldID='Alarm' and Field=a.Alarm) as ALARMNAME,CONTENTS,MV,AlarmV,a.SENDSIGN,
+        (select stuff((select ',' + (select FieldName from WRP_FieldInfo where FormID='ST_STBPRP_F' and FieldID='TYPE' and Field=type) from ST_STBPRP_F f where f.STCD =b.STCD for xml path('')),1,1,'')) as TYPENAME,
+        <if test="plantsign==3">
+            <include refid="Alarm_Adcd_Xian" />
+        </if>
+        <if test="plantsign==2">
+            <include refid="Alarm_Adcd_Shi" />
+        </if>
+        , ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId
+        from ST_AlarmInfo a inner join ST_STBPRP_B b on a.STCD=b.STCD
+        where tm &gt;= CONVERT(datetime,'${begintime}',120) and tm &lt;= CONVERT(datetime,'${endtime}',120)
+        <if test="adcd != null &amp;&amp; adcd !='' ">
+        and b.ADDVCD like #{adcd}+'%'
+        </if>
+        <if test="alarmlevel !=null &amp;&amp; alarmlevel > 0">
+        and a.Alarm=#{alarmlevel}
+        </if>
+        <if test="sitename != null &amp;&amp; sitename !='' ">
+        and b.STNM like '%'+#{sitename}+'%'
+        </if>
+        ) as b where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--根据STCD查询站点预警信息-->
+    <select id="selectWarmInfoBySTCD" resultMap="BaseResultMap">
+        select a.STCD,b.STNM,convert(varchar(19),tm,120) as TMSTR,(select FieldName from WRP_FieldInfo where FormID='ST_AlarmInfo' and FieldID='Alarm' and Field=a.Alarm) as ALARMNAME,CONTENTS,MV,AlarmV,CASE sendsign when 1 then '已预警' else '未预警' end SIGNNAME,
+        (select stuff((select ',' + (select FieldName from WRP_FieldInfo where FormID='ST_STBPRP_F' and FieldID='TYPE' and Field=type)+'-'+type from ST_STBPRP_F f where f.STCD =b.STCD for xml path('')),1,1,'')) as TYPENAME,
+        <if test="plantsign==3">
+            <include refid="Alarm_Adcd_Xian" />
+        </if>
+        <if test="plantsign==2">
+            <include refid="Alarm_Adcd_Shi" />
+        </if>
+        from ST_AlarmInfo a inner join ST_STBPRP_B b on a.STCD=b.STCD where a.STCD=#{stcd} and a.tm=CONVERT(datetime,'${tm}',120)
+    </select>
+    <!--降雨预警指标统计-->
+    <select id="selectStPpAlarmByCount" parameterType="com.example.table.entity.LvDingParam" resultType="java.lang.Integer">
+        select count(*) as count from ST_PP_Alarm a inner join st_stbprp_b b on a.STCD=b.STCD where 1=1
+        <if test="types != null &amp;&amp; types > 0 ">
+            and a.EWL=#{types}
+        </if>
+        <if test="stnm != null &amp;&amp; stnm != ''">
+            and b.STNM like '%'+#{stnm}+'%'
+        </if>
+    </select>
+    <!--降雨预警指标分页查询-->
+    <select id="selectStPpAlarmByPage" resultMap="StPpAlarmResultMap" parameterType="com.example.table.entity.LvDingParam">
+    select * from
+    (select b.STNM,a.STCD,a.EWL,(select FieldName from WRP_FieldInfo where FormID='ST_PP_Alarm' and FieldID='EWL' and Field=a.EWL) as EWLNAME,a.PTD_P,a.OH_P,a.TH_P,a.SH_P,a.TWH_P,a.OD_P, ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId
+    from ST_PP_Alarm a inner join st_stbprp_b b on a.STCD=b.STCD where 1=1
+        <if test="types != null &amp;&amp; types > 0 ">
+            and a.EWL=#{types}
+        </if>
+        <if test="stnm != null &amp;&amp; stnm != ''">
+            and b.STNM like '%'+#{stnm}+'%'
+        </if>
+    ) as b where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--水库水位预警指标统计-->
+    <select id="selectStRsvAlarmByCount" parameterType="com.example.table.entity.LvDingParam" resultType="java.lang.Integer">
+        select count(*) as count from ST_RSV_Alarm a inner join st_stbprp_b b on a.STCD=b.STCD
+        <if test="stnm != null &amp;&amp; stnm != ''">
+            where b.STNM like '%'+#{stnm}+'%'
+        </if>
+    </select>
+    <!--水库水位预警指标分页查询-->
+    <select id="selectStRswAlarmByPage" resultMap="StRsvAlarmResultMap" parameterType="com.example.table.entity.LvDingParam">
+        select * from
+        (select a.STCD,b.STNM,a.SWL,a.FWL,a.FWL79,a.ZCWL,a.SJWL,a.XHWL,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId
+        from ST_RSV_Alarm a inner join st_stbprp_b b on a.STCD=b.STCD
+        <if test="stnm != null &amp;&amp; stnm != ''">
+            where b.STNM like '%'+#{stnm}+'%'
+        </if>
+        ) as b where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--河道水位预警指标统计-->
+    <select id="selectStRiverAlarmByCount" parameterType="com.example.table.entity.LvDingParam" resultType="java.lang.Integer">
+        select count(*) as count from ST_RIVER_Alarm a inner join st_stbprp_b b on a.STCD=b.STCD
+        <if test="stnm != null &amp;&amp; stnm != ''">
+            where b.STNM like '%'+#{stnm}+'%'
+        </if>
+    </select>
+    <!--河道水位预警指标分页查询-->
+    <select id="selectStRiverAlarmByPage" parameterType="com.example.table.entity.LvDingParam" resultMap="StRiverAlarmResultMap">
+        select * from
+        (select a.STCD,b.STNM,a.AWL,a.BZWL,a.SJWL,a.XHWL,a.JYWL,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId
+        from ST_RIVER_Alarm a inner join st_stbprp_b b on a.STCD=b.STCD
+        <if test="stnm != null &amp;&amp; stnm != ''">
+            where b.STNM like '%'+#{stnm}+'%'
+        </if>
+        ) as b where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--雨情时段报表-->
+    <select id="selectHourRainExport" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        select
+        (select ad_nm from WRP_AD_B where ad_cd=substring(addvcd,1,9)+'000') as ZHEN,
+        b.STCD,b.STNM,c.P
+        from ST_STBPRP_B b inner join ST_STBPRP_F f on f.type=1 and b.stcd=f.stcd
+        inner join
+        (select stcd,sum(p) as p from ST_HP_C where
+        dateadd(hh,tm,convert(varchar(10),dt))>=#{begintime} and dateadd(hh,tm,convert(varchar(10),dt))&lt;=#{endtime}
+        group by stcd
+        ) as c on b.stcd=c.stcd
+        <if test="stnm != null &amp;&amp; stnm != ''">
+        where b.stnm like '%'+#{stnm}+'%'
+        </if>
+    </select>
+    <!--雨情日表报表-->
+    <select id="selectDayRainExport" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        select b.STCD,b.STNM,c.P,h.*,
+        (select FieldName from WRP_FieldInfo where FormID='ST_STBPRP_B' and FieldID='STGR' and Field=STGR) as STGR,
+        (select case ad_lv when 5 then AD_NM when 6 then (select AD_NM from WRP_AD_B sub where sub.ad_cd=m.UP_ADCD)+AD_NM end from WRP_AD_B m where AD_CD=ADDVCD) as AD_NM
+        from ST_STBPRP_B b inner join ST_STBPRP_F f on f.type=1 and b.stcd=f.stcd
+        left join
+        (select stcd,p from ST_DP_C where TM=#{begintime}
+        ) as c on b.stcd=c.STCD
+        left join (select * from (select STCD as temp,P,convert(varchar(2),TM)+':00-'+convert(varchar(2),(IIF(TM=23,0,TM+1)))+':00' as TM from ST_HP_C
+        where
+        DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))>=#{begintime}+' 08:00:00' and DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))&lt;=#{endtime}+' 07:00:00') b
+        PIVOT(MAX(P) FOR
+        TM IN ([8:00-9:00],[9:00-10:00],[10:00-11:00],[11:00-12:00],[12:00-13:00],[13:00-14:00],[14:00-15:00],[15:00-16:00],[16:00-17:00],[17:00-18:00],[18:00-19:00],[19:00-20:00],[20:00-21:00],[21:00-22:00],[22:00-23:00],[23:00-0:00],[0:00-1:00],[1:00-2:00],[2:00-3:00],[3:00-4:00],[4:00-5:00],[5:00-6:00],[6:00-7:00],[7:00-8:00])
+        ) a) h on b.STCD=h.temp
+        <if test="stnm != null &amp;&amp; stnm != ''">
+        where b.stnm like '%'+#{stnm}+'%'
+        </if>
+    </select>
+    <!--雨情月表报表-->
+    <select id="selectMonthRainExport" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        select b.STCD,b.STNM,e.P,d.*,
+        (select FieldName from WRP_FieldInfo where FormID='ST_STBPRP_B' and FieldID='STGR' and Field=STGR) as STGR,
+        (select case ad_lv when 5 then AD_NM when 6 then (select AD_NM from WRP_AD_B sub where sub.ad_cd=m.UP_ADCD)+AD_NM end from WRP_AD_B m where AD_CD=ADDVCD) as AD_NM
+        from ST_STBPRP_B b inner join ST_STBPRP_F f on f.type=1 and b.stcd=f.stcd
+        left join
+        (select STCD,P from ST_MTP_E
+        where
+        YR=#{year} and MON=#{month}
+        ) e on b.stcd=e.stcd
+        left join (select * from (select STCD as temp,P,datepart(dd,TM) as TM from ST_DP_C where
+        convert(varchar(7),TM,120)=#{begintime}
+        ) b
+        PIVOT(MAX(P) FOR
+        TM IN ([1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],
+        [16],[17],[18],[19],[20],[21],[22],[23],[24],[25],[26],[27],[28],[29],[30],[31])
+        ) a) d on b.STCD=d.temp
+        <if test="stnm != null &amp;&amp; stnm != ''">
+            where b.stnm like '%'+#{stnm}+'%'
+        </if>
+    </select>
+    <!--雨情年表报表-->
+    <select id="selectYearRainExport" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        select b.STCD,b.STNM,y.P,d.*,
+        (select FieldName from WRP_FieldInfo where FormID='ST_STBPRP_B' and FieldID='STGR' and Field=STGR) as STGR,
+        (select case ad_lv when 5 then AD_NM when 6 then (select AD_NM from WRP_AD_B sub where sub.ad_cd=m.UP_ADCD)+AD_NM end from WRP_AD_B m where AD_CD=ADDVCD) as AD_NM
+        from ST_STBPRP_B b inner join ST_STBPRP_F f on f.type=1 and b.stcd=f.stcd
+        left join
+        (select stcd,p as p from ST_YRP_F where
+        YR=#{year}
+        ) as y on b.stcd=y.stcd
+        left join (select * from (select STCD as temp,P,CONVERT(varchar(2),MON)+'月' as MON from ST_MTP_E where
+        YR=#{year}
+        ) b
+        PIVOT(MAX(P) FOR
+        MON IN ([1月],[2月],[3月],[4月],[5月],[6月],[7月],[8月],[9月],[10月],[11月],[12月])
+        ) a) d on b.STCD=d.temp
+        <if test="stnm != null &amp;&amp; stnm != ''">
+            where b.stnm like '%'+#{stnm}+'%'
+        </if>
+    </select>
+    <!--水库水情小时表-站点基本信息-->
+    <select id="selectRsvrInfoExport" resultType="java.util.Map">
+    select b.STCD,b.STNM,a.FWL,a.FWL79,a.ZCWL from ST_STBPRP_B b inner join ST_STBPRP_F f on f.type=2 and b.stcd=f.stcd left join ST_RSVR_R1 r on r.stcd=b.stcd
+    left join ST_RSV_Alarm a on b.STCD=a.STCD
+    </select>
+    <!--水库水情小时表-小时报表-->
+    <select id="selectRsvrHourExport" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        SELECT CONVERT(VARCHAR(13),DATEADD(hh,TM,CONVERT(varchar(100), DT, 111)),120) as DT,
+        max(CASE stcd WHEN '6530240002' THEN RZ ELSE 0 end) AVGWATER,
+        max(CASE stcd WHEN '6530240002' THEN CV ELSE 0 end) FLOODWATER,
+        max(CASE stcd WHEN '6530240002' THEN INQ ELSE 0 end) AVGINFLOW,
+        max(CASE stcd WHEN '6530240002' THEN OTQ ELSE 0 end) AVGOUTFLOW,
+        max(CASE stcd WHEN '6530240002' THEN HW ELSE 0 end) WATERSTORE
+        FROM ST_RSVR_H
+        where DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))>=#{begintime} and DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))&lt;=#{endtime}
+        GROUP BY dt,tm
+        order by dt desc
+    </select>
+    <!--水库水情历史表-->
+    <select id="selectRsvrHistoryExport" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        select substring(CONVERT(varchar(100), TM, 120),1,16) as TM,RZ,INQ,OTQ,W,CV, ROW_NUMBER() OVER(Order by tm desc) AS RowId
+        from ST_RSVR_R
+        where  tm>=#{begintime} and tm&lt;=#{endtime}
+    </select>
+    <!--水库水情日表-->
+    <select id="selectRsvrDayExport" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        select b.STNM,b.stcd,c.tm,c.RZ,c.CV,c.INQ,c.OTQ,c.DW,c.IDW,c.ODW,a.FWL,a.FWL79,c.Max_RZ,CONVERT(varchar(16), c.Max_TM, 120) as Max_TM,c.Min_RZ,CONVERT(varchar(16), c.Min_TM, 120) as Min_TM,
+        (select FieldName from WRP_FieldInfo where FormID='ST_RSVR_R1' and FieldID='LEVEL' and Field=r.LEVEL) as LEVEL,
+        (select FieldName from WRP_FieldInfo where FormID='ST_STBPRP_B' and FieldID='STGR' and Field=b.STGR) as STGR,
+        (select case ad_lv when 5 then AD_NM when 6 then (select AD_NM from WRP_AD_B sub where sub.ad_cd=m.UP_ADCD)+AD_NM end from WRP_AD_B m where AD_CD=ADDVCD) as AD_NM
+        from ST_STBPRP_B b
+        inner join  ST_STBPRP_F f on f.type=2 and b.stcd=f.stcd
+        left join (select * from ST_RSVR_D
+        where
+        tm=cast('${begintime}' as datetime)
+        ) c on b.stcd=c.stcd
+        left join ST_RSVR_R1 r on r.stcd=b.stcd
+        left join ST_RSV_Alarm a on b.STCD=a.STCD
+    </select>
+    <!--水库水情月表-->
+    <select id="selectRsvrMonthExport" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        select b.STNM,b.stcd,convert(varchar,c.yr)+case when len(c.MON)=1 then '0'+ convert(varchar,c.mon) else convert(varchar,c.mon) end as dt,c.RZ,c.INQ,c.OTQ,c.MW,a.FWL,a.FWL79,c.Max_RZ,CONVERT(varchar(16), c.Max_TM, 120) as Max_TM,c.Min_RZ,CONVERT(varchar(16), c.Min_TM, 120) as Min_TM,
+        (select FieldName from WRP_FieldInfo where FormID='ST_RSVR_R1' and FieldID='LEVEL' and Field=r.LEVEL) as LEVEL,
+        (select FieldName from WRP_FieldInfo where FormID='ST_STBPRP_B' and FieldID='STGR' and Field=b.STGR) as STGR,
+        (select case ad_lv when 5 then AD_NM when 6 then (select AD_NM from WRP_AD_B sub where sub.ad_cd=m.UP_ADCD)+AD_NM end from WRP_AD_B m where AD_CD=ADDVCD) as AD_NM
+        from ST_STBPRP_B b
+        inner join  ST_STBPRP_F f on f.type=2 and b.stcd=f.stcd
+        left join (select * from ST_RSVR_M
+        where
+        yr=#{year} and mon=#{month}
+        ) c on b.stcd=c.stcd
+        left join ST_RSVR_R1 r on r.stcd=b.stcd
+        left join ST_RSV_Alarm a on b.STCD=a.STCD
+    </select>
+    <!--河道水情小时表-站点基本信息-->
+    <select id="selectRiverInfoExport" resultType="java.util.Map">
+    select b.STCD,b.STNM,a.AWL from ST_STBPRP_B b inner join ST_STBPRP_F f on f.type=3 and b.stcd=f.stcd left join ST_RSVR_R1 r on r.stcd=b.stcd
+    left join ST_RIVER_Alarm a on b.STCD=a.STCD
+    </select>
+    <!--河道水情小时表-小时报表-->
+    <select id="selectRiverHourExport" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        SELECT CONVERT(VARCHAR(13),a.dt,120) AS DT, b.*, ROW_NUMBER() OVER(Order by a.dt desc) AS RowId FROM
+        ( SELECT dateadd(HH, number, '${begintime}') DT FROM master..spt_values WHERE type = 'p' AND dateadd(HH, number, '${begintime}') &lt;='${endtime}' ) a
+        LEFT JOIN (
+        SELECT max(CASE b.stcd WHEN '6530240003' THEN isnull(RZ,0) ELSE 0 end) AVGWATER,
+        max(CASE b.stcd WHEN '6530240003' THEN isnull(CV,0) ELSE 0 end) FLOODWATER,
+        max(CASE b.stcd WHEN '6530240003' THEN isnull(INQ,0) ELSE 0 end) AVGFLOW,
+        max(CASE b.stcd WHEN '6530240003' THEN isnull(HW,0) ELSE 0 end) HOURFLOW,
+        DATEADD(hh,TM,CONVERT(varchar(100), DT, 111)) as temp FROM ST_RIVER_H h
+        inner join ST_STBPRP_B b on h.STCD=b.STCD where DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))>=#{begintime}
+        and DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))&lt;=#{endtime} GROUP BY dt,tm ) b ON a.dt = b.temp
+    </select>
+    <!--河道水情历史表-->
+    <select id="selectRiverHistoryExport" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        SELECT substring(CONVERT(varchar(100), TM, 120), 1, 16) AS TM, Z, Q,CV, ROW_NUMBER() OVER (ORDER BY tm DESC) AS RowId
+        FROM ST_RIVER_R r LEFT JOIN ST_STBPRP_B b ON b.STCD = r.STCD
+        WHERE tm >= #{begintime} AND tm &lt;= #{endtime}
+    </select>
+    <!--河道水情日表-->
+    <select id="selectRiverDayExport" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        select b.STNM,b.stcd,c.tm,c.RZ,c.CV,c.INQ,c.DW,a.AWL,c.Max_RZ,CONVERT(varchar(16), c.Max_TM, 120) as Max_TM,c.Min_RZ,CONVERT(varchar(16), c.Min_TM, 120) as Min_TM,
+        (select FieldName from WRP_FieldInfo where FormID='ST_STBPRP_B' and FieldID='STGR' and Field=b.STGR) as STGR,
+        (select case ad_lv when 5 then AD_NM when 6 then (select AD_NM from WRP_AD_B sub where sub.ad_cd=m.UP_ADCD)+AD_NM end from WRP_AD_B m where AD_CD=ADDVCD) as AD_NM
+        from ST_STBPRP_B b
+        inner join  ST_STBPRP_F f on f.type=3 and b.stcd=f.stcd
+        left join (select * from ST_RIVER_D
+        where tm=cast('${begintime}' as datetime)
+        ) c on b.stcd=c.stcd
+        left join ST_RIVER_Alarm a on b.STCD=a.STCD
+    </select>
+    <!--河道水情月表-->
+    <select id="selectRiverMonthExport" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        select b.STNM,b.stcd,convert(varchar,c.yr)+case when len(c.MON)=1 then '0'+ convert(varchar,c.mon) else convert(varchar,c.mon) end as dt,c.RZ,c.INQ,c.MW,a.AWL,c.Max_RZ,CONVERT(varchar(16), c.Max_TM, 120) as Max_TM,c.Min_RZ,CONVERT(varchar(16), c.Min_TM, 120) as Min_TM,
+        (select FieldName from WRP_FieldInfo where FormID='ST_STBPRP_B' and FieldID='STGR' and Field=b.STGR) as STGR,
+        (select case ad_lv when 5 then AD_NM when 6 then (select AD_NM from WRP_AD_B sub where sub.ad_cd=m.UP_ADCD)+AD_NM end from WRP_AD_B m where AD_CD=ADDVCD) as AD_NM
+        from ST_STBPRP_B b
+        inner join  ST_STBPRP_F f on f.type=3 and b.stcd=f.stcd
+        left join (select * from ST_RIVER_M
+        where
+        yr=#{year} and mon=#{month}
+        ) c on b.stcd=c.stcd
+        left join ST_RIVER_Alarm a on b.STCD=a.STCD
+    </select>
+    <!--渠道水情日表-->
+    <select id="selectQudaoDayExport" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        SELECT b.STNM, b.STCD, c.TM, c.da_q as DQ, c.da_z as DZ, c.dwq as DWQ,
+        (SELECT FieldName FROM WRP_FieldInfo WHERE FormANDFieldID = '101' AND Field = stype) AS STYPE,
+        (SELECT stuff((SELECT ',' + canal_name FROM WRP_IrrBTCanalSystem WHERE Canal_Code IN (SELECT baseid FROM ST_STINFO_WRP w WHERE FormID = 'WRP_IrrBTCanalSystem' AND w.stcd = b.stcd) FOR XML PATH('')), 1, 1, '')) AS CanalName,
+        (SELECT (SELECT ad_nm FROM WRP_AD_B sub WHERE sub.ad_cd = m.UP_ADCD) + ad_nm FROM WRP_AD_B m WHERE ad_cd = addvcd) AS ADNM, ROW_NUMBER() OVER (ORDER BY b.stcd) AS RowId
+        FROM ST_STBPRP_B b
+         INNER JOIN ST_STBPRP_F f ON f.type = 4 AND b.stcd = f.stcd
+         LEFT JOIN (SELECT * FROM ST_DCanal_C WHERE tm = CAST('${begintime}' AS datetime)) c ON b.stcd = c.stcd
+         LEFT JOIN ST_Canal_R1 r ON r.stcd = b.stcd
+         where 1=1
+        <if test="memo !=null &amp;&amp; memo !='' ">
+            and b.stcd in(${memo})
+        </if>
+        <if test="canalCode !=null &amp;&amp; canalCode !='' ">
+            and b.stcd in(select stcd from ST_STINFO_WRP w where FormID='WRP_IrrBTCanalSystem' and (w.BaseID=#{canalCode} or w.BaseID in(select Canal_Code from dbo.fn_getCanalChild(#{canalCode}))))
+        </if>
+        <if test="sitetype != null &amp;&amp; sitetype>0">
+            and r.stype=#{sitetype}
+        </if>
+    </select>
+    <!--渠道水情月表-->
+    <select id="selectQudaoMonthExport" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        SELECT b.STNM, b.STCD, convert(varchar, c.yr) + CASE WHEN len(c.MON) = 1 THEN'-0' + convert(varchar, c.mon) ELSE (SELECT CONVERT(varchar, c.yr) + '-' + convert(varchar, c.mon)) END AS DT, c.MA_Q, c.MA_Z, c.MWQ,
+        (SELECT FieldName FROM WRP_FieldInfo WHERE FormANDFieldID = '101' AND Field = stype) AS STYLE,
+        (SELECT stuff((SELECT ',' + canal_name FROM WRP_IrrBTCanalSystem WHERE Canal_Code IN (SELECT baseid FROM ST_STINFO_WRP w WHERE FormID = 'WRP_IrrBTCanalSystem' AND w.stcd = b.stcd) FOR XML PATH('')), 1, 1, '')) AS CANALNAME,
+        (SELECT (SELECT ad_nm FROM WRP_AD_B sub WHERE sub.ad_cd = m.UP_ADCD) + ad_nm FROM WRP_AD_B m WHERE ad_cd = addvcd) AS ADNM, ROW_NUMBER() OVER (ORDER BY b.stcd) AS RowId
+        FROM ST_STBPRP_B b
+         INNER JOIN ST_STBPRP_F f ON f.type = 4 AND b.stcd = f.stcd
+         LEFT JOIN (SELECT * FROM ST_MCanal_C WHERE yr = #{year} AND mon = #{month}) c ON b.stcd = c.stcd
+         LEFT JOIN ST_Canal_R1 r ON r.stcd = b.stcd
+         where 1=1
+        <if test="memo !=null &amp;&amp; memo !='' ">
+            and b.stcd in(${memo})
+        </if>
+        <if test="canalCode !=null &amp;&amp; canalCode !='' ">
+            and b.stcd in(select stcd from ST_STINFO_WRP w where FormID='WRP_IrrBTCanalSystem' and (w.BaseID=#{canalCode} or w.BaseID in(select Canal_Code from dbo.fn_getCanalChild(#{canalCode}))))
+        </if>
+        <if test="sitetype != null &amp;&amp; sitetype>0">
+            and r.stype=#{sitetype}
+        </if>
+    </select>
+    <!--获取水情渠道站点名称和编码-->
+    <select id="selectQudaoSiteName" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        select b.stnm,b.stcd from ST_STBPRP_B b inner join ST_STBPRP_F f on f.type=4 and b.stcd=f.stcd left join ST_Canal_R1 r on r.stcd=b.stcd
+        where 1=1
+        <if test="memo !=null &amp;&amp; memo !='' ">
+            and b.stcd in(${memo})
+        </if>
+        <if test="canalCode !=null &amp;&amp; canalCode !='' ">
+            and b.stcd in(select stcd from ST_STINFO_WRP w where FormID='WRP_IrrBTCanalSystem' and (w.BaseID=#{canalCode} or w.BaseID in(select Canal_Code from dbo.fn_getCanalChild(#{canalCode}))))
+        </if>
+        <if test="sitetype != null &amp;&amp; sitetype>0">
+            and r.stype=#{sitetype}
+        </if>
+    </select>
+    <!--渠道水情小时表-->
+    <select id="selectQudaoHourExport" parameterType="com.example.table.entity.AlarmParam" resultType="java.util.Map">
+        SELECT CONVERT(VARCHAR(13),DATEADD(hh,TM,CONVERT(varchar(100), DT, 111)),120) as dt,
+        ${subsql}
+        FROM ST_HCanal_C
+        where DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))>=#{begintime} and DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))&lt;=#{endtime}
+        GROUP BY dt,tm
+        order by dt desc
+    </select>
+    <!--渠道水情历史表-->
+    <select id="selectQudaoLsExport" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        select substring(CONVERT(varchar(100), TM, 120),3,14) as tm,z,q, ROW_NUMBER() OVER(Order by tm desc) AS RowId
+        from ST_Canal_R
+        where
+        STCD=#{stcd}
+        and tm>=#{begintime} and tm &lt;=#{endtime}
+    </select>
+</mapper>

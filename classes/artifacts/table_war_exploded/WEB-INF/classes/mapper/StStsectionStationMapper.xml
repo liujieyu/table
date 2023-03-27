@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.table.mapper.StStsectionStationMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.example.table.entity.StStsectionStation">
+        <result column="ID" property="id" />
+        <result column="STCD" property="stcd" />
+        <result column="STNM" property="stnm" />
+        <result column="CANAL_CODE" property="canalCode" />
+        <result column="Canal_Name" property="canalName" />
+        <result column="B" property="b" />
+        <result column="M" property="m" />
+        <result column="N" property="n" />
+        <result column="I" property="i" />
+        <result column="TYPES" property="types" />
+        <result column="TYPENAME" property="typename" />
+        <result column="MAX_Z" property="maxZ" />
+        <result column="MAX_Q" property="maxQ" />
+        <result column="FORMULA" property="formula" />
+        <result column="RowId" property="rowid" />
+    </resultMap>
+    <!-- 巴歇尔槽站点参数映射结果 -->
+    <resultMap id="StParStationResultMap" type="com.example.table.entity.StParStation">
+        <result column="ID" property="id" />
+        <result column="STCD" property="stcd" />
+        <result column="STNM" property="stnm" />
+        <result column="CANAL_CODE" property="canalCode" />
+        <result column="CANAL_NAME" property="canalName" />
+        <result column="MODEL" property="model" />
+        <result column="MODELNAME" property="modelname" />
+        <result column="Z_MAX" property="zMax" />
+        <result column="Q_MAX" property="qMax" />
+        <result column="RowId" property="rowid" />
+    </resultMap>
+    <!-- 标准巴歇尔槽参数映射结果 -->
+    <resultMap id="StParshallFlumeMap" type="com.example.table.entity.StParshallFlume">
+        <result column="RowId" property="rowid" />
+        <result column="ID" property="id" />
+        <result column="TYPES" property="types" />
+        <result column="MODEL" property="model" />
+        <result column="Z_MIN" property="zMin" />
+        <result column="Z_MAX" property="zMax" />
+        <result column="Q_MIN" property="qMin" />
+        <result column="Q_MAX" property="qMax" />
+        <result column="YMD" property="ymd" />
+        <result column="SIZE" property="size" />
+        <result column="B" property="b" />
+        <result column="L" property="l" />
+        <result column="N" property="n" />
+        <result column="B1" property="b1" />
+        <result column="L1" property="l1" />
+        <result column="LA" property="la" />
+        <result column="B2" property="b2" />
+        <result column="L2" property="l2" />
+        <result column="K" property="k" />
+        <result column="D" property="d" />
+        <result column="C" property="c" />
+        <result column="N1" property="n1" />
+    </resultMap>
+    <!-- 水闸参数映射结果 -->
+    <resultMap id="StGateStationMap" type="com.example.table.entity.StGateStation">
+        <result column="RowId" property="rowid" />
+        <result column="ID" property="id" />
+        <result column="STCD" property="stcd" />
+        <result column="STNM" property="stnm" />
+        <result column="CANAL_CODE" property="canalCode" />
+        <result column="CANAL_NAME" property="canalName" />
+        <result column="SLCD" property="slcd" />
+        <result column="SLTP" property="sltp" />
+        <result column="SLTPNAME" property="sltpname" />
+        <result column="GTHLNTWD" property="gthlntwd" />
+        <result column="GATE_HI" property="gateHi" />
+        <result column="Z_MAX_F" property="zMaxF" />
+        <result column="Q_MAX_F" property="qMaxF" />
+        <result column="Z_MAX_B" property="zMaxB" />
+        <result column="Q_MAX_B" property="qMaxB" />
+        <result column="MEMO" property="memo" />
+    </resultMap>
+    <!--标准断面参数查询-->
+    <select id="selectStStsectionStationCount" parameterType="com.example.table.entity.LvDingParam" resultType="java.lang.Integer">
+        SELECT count(*) from ST_STSECTION_STATION s inner join WRP_IrrBTCanalSystem w on s.CANAL_CODE=w.Canal_Code
+        where s.YR=#{year}
+        <if test="stnm !=null &amp;&amp; stnm !=''">
+        and s.STNM like '%'+#{stnm}+'%'
+        </if>
+    </select>
+    <select id="selectStStsectionStationByPage" parameterType="com.example.table.entity.LvDingParam" resultMap="BaseResultMap">
+        select * from
+        (select STCD,STNM,w.Canal_Name,B,M,N,I,YR,(select FieldName from WRP_FieldInfo where FormID='ST_STSECTION_STATION' and FieldID='TYPES' and Field=s.TYPES) as TYPENAME,MAX_Z,MAX_Q,
+        ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId
+        from ST_STSECTION_STATION s inner join WRP_IrrBTCanalSystem w on s.CANAL_CODE=w.Canal_Code
+        where s.YR=#{year}
+        <if test="stnm !=null &amp;&amp; stnm !=''">
+        and s.STNM like '%'+#{stnm}+'%'
+        </if>
+        )as b where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--巴歇尔槽站点参数查询-->
+    <select id="selectStParStationCount" parameterType="com.example.table.entity.LvDingParam" resultType="java.lang.Integer">
+        select count(*) from ST_PAR_STATION s inner join WRP_IrrBTCanalSystem w on s.CANAL_CODE=w.Canal_Code
+        where 1=1
+        <if test="model!=null &amp;&amp; model>0">
+        and MODEL=#{model}
+        </if>
+        <if test="stnm !=null &amp;&amp; stnm !=''">
+        and STNM like '%'+#{stnm}+'%'
+        </if>
+    </select>
+    <select id="selectStParStationByPage" parameterType="com.example.table.entity.LvDingParam" resultMap="StParStationResultMap">
+        select * from
+        (select STCD,STNM,w.Canal_Name,(select FieldName from WRP_FieldInfo where FormID='ST_PAR_STATION' and FieldID='MODEL' and Field=s.MODEL) as MODELNAME,Z_MAX,Q_MAX
+        ,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId
+        from ST_PAR_STATION s inner join WRP_IrrBTCanalSystem w on s.CANAL_CODE=w.Canal_Code
+        where 1=1
+        <if test="model!=null &amp;&amp; model>0">
+            and MODEL=#{model}
+        </if>
+        <if test="stnm !=null &amp;&amp; stnm !=''">
+            and STNM like '%'+#{stnm}+'%'
+        </if>
+        )as b where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--标准巴歇尔槽参数查询-->
+    <select id="selectStParshallFlumeCount" resultType="java.lang.Integer">
+        select count(*) from ST_PARSHALL_FLUME
+    </select>
+    <select id="selectStParshallFlumeByPage" parameterType="com.example.table.entity.LvDingParam" resultMap="StParshallFlumeMap">
+        select * from
+        (select s.*,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId from ST_PARSHALL_FLUME s) b where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--水闸站点参数查询-->
+    <select id="selectStGateStationCount" resultType="java.lang.Integer" parameterType="com.example.table.entity.LvDingParam">
+        select count(*) from ST_Gate_Station g inner join WRP_IrrBTCanalSystem w on g.CANAL_CODE=w.Canal_Code
+        where 1=1
+        <if test="sltp!=null &amp;&amp; sltp>0">
+        and SLTP=#{sltp}
+        </if>
+        <if test="stnm !=null &amp;&amp; stnm !=''">
+            and STNM like '%'+#{stnm}+'%'
+        </if>
+    </select>
+    <select id="selectStGateStationByPage" parameterType="com.example.table.entity.LvDingParam" resultMap="StGateStationMap">
+        select * from
+        (select g.STCD,g.STNM,w.Canal_Name,(select FieldName from WRP_FieldInfo where FormID='ST_Gate_Station' and FieldID='SLTP' and Field=g.SLTP) as SLTPNAME,
+        GTHLNTWD,GATE_HI,Z_MAX_F,Q_MAX_F,Z_MAX_B,Q_MAX_B,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId
+        from ST_Gate_Station g inner join WRP_IrrBTCanalSystem w on g.CANAL_CODE=w.Canal_Code
+        where 1=1
+        <if test="sltp!=null &amp;&amp; sltp>0">
+            and SLTP=#{sltp}
+        </if>
+        <if test="stnm !=null &amp;&amp; stnm !=''">
+            and STNM like '%'+#{stnm}+'%'
+        </if>
+        ) as b where RowId between #{begincount} and #{endcount}
+    </select>
+</mapper>

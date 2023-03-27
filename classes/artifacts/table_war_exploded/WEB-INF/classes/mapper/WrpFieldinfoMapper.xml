@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.table.mapper.WrpFieldinfoMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.example.table.entity.WrpFieldinfo">
+        <id column="ID" property="id" />
+        <result column="FormANDFieldID" property="FormANDFieldID" />
+        <result column="FormID" property="FormID" />
+        <result column="FieldID" property="FieldID" />
+        <result column="Field" property="Field" />
+        <result column="FieldName" property="FieldName" />
+    </resultMap>
+    <select id="selectWrpFieldinfoByFormIDAndFieldID" resultType="java.util.Map">
+        select Field as value,FieldName as label from WRP_FieldInfo where FormID=#{formid} and FieldID=#{fieldid}
+    </select>
+    <!--表格选取表查询-->
+    <select id="selectSysFormInfoByFCodeAndFNum" resultType="java.util.Map">
+        select FormID as value,FormNM as label from SYS_FormInfo where FCode=#{fcode} and FNum=#{fnum} order by FormRank
+    </select>
+    <!--水量图数据-->
+    <select id="selectBorchartData" resultType="java.util.Map" parameterType="com.example.table.entity.AlarmParam">
+        select CONVERT(varchar(10),dt,120) as DT,isnull(DWQ,0) as DWQ FROM
+        (SELECT dateadd(DD, number, #{begintime}) dt FROM master..spt_values WHERE type = 'p' AND dateadd(DD, number, #{begintime}) &lt;= #{endtime}) a
+        LEFT JOIN (select sum(DWQ) as DWQ,TM from ST_DCanal_C where STCD in(${subsql}) and tm between #{begintime} and #{endtime} group by TM)b on a.dt=b.TM
+    </select>
+    <!--饼状图数据-->
+    <select id="selectPiechartData" resultType="java.util.Map">
+        select CS,count(stcd) as TOTAL,case cs when 1 then '正常' else '故障' end as TITLE from
+        (select stcd,isnull(CS,0) as CS from ST_StationStatus_R) r group by CS order by CS desc
+    </select>
+    <!--图像站点数据-->
+    <select id="selectImgsiteData" resultType="java.util.Map">
+         select b.STCD,b.STNM,r.IMAGE from ST_STBPRP_B b inner join (select * from ST_STBPRP_F where type=7) f on b.STCD=f.STCD
+         left join ST_JPG_R r on b.STCD=r.STCD
+    </select>
+    <!--渠道实时信息-->
+    <select id="selectStCanalRBystcd" resultType="java.util.Map">
+        select b.*,CONVERT(varchar(100),isnull(tm,GETDATE()),120) as TM,isnull(r.Q,0) as Q,isnull(r.Z,0) as Z,case when r.Z>a.Z then 1 when r.Q>a.Q then 1 else 0 end as ALARM from (select STCD,STNM from ST_STBPRP_B) b inner join (select * from ST_STBPRP_F where type=4) f on b.STCD=f.STCD left join (select * from ST_Canal_R1 where tm>=CONVERT(varchar(10),GETDATE(),120)) r on b.STCD=r.STCD
+        left join ST_Canal_Alarm a on b.STCD=a.STCD
+    </select>
+    <!--闸阀实时信息-->
+    <select id="selectStWasBystcd" resultType="java.util.Map">
+        select b.*,CONVERT(varchar(100),isnull(r.tm,GETDATE()),120) as TM,r.UPZ,r.DWZ,r.Q,g.OP,case when r.UPZ>a.SZ then 1 when r.DWZ>a.EZ then 1 when r.Q>a.Q then 1 else 0 end as ALARM from (select STCD,STNM from ST_STBPRP_B) b inner join (select * from ST_STBPRP_F where type=5) f on b.STCD=f.STCD left join (select * from ST_WAS_R1 where tm>=CONVERT(varchar(10),GETDATE(),120)) r on b.STCD=r.STCD
+        left join ST_Gate_Alarm a on b.STCD=a.STCD left join ST_Gatage_R g on b.STCD=g.STCD
+    </select>
+    <!--视频站点数据-->
+    <select id="selectVideositeData" resultType="java.util.Map">
+        select b.STCD,b.STNM,r.WWWPath,PUID from ST_STBPRP_B b inner join ST_STBPRP_F f on type=8 and b.STCD=f.STCD left join ST_MOVIE_R r on b.STCD=r.STCD
+    </select>
+    <!--雨情数据-->
+    <select id="selectRainData" resultType="java.util.Map" parameterType="com.example.table.entity.AlarmParam">
+        SELECT CONVERT(VARCHAR(13),a.dt,120) as DT,
+        max(CASE stcd WHEN '6530240001' THEN p ELSE 0 end) RAIN1,
+        max(CASE stcd WHEN '6530240002' THEN p ELSE 0 end) RAIN2,
+        max(CASE stcd WHEN '6530240003' THEN p ELSE 0 end) RAIN3
+        FROM
+        (SELECT dateadd(HH, number, #{begintime}) dt FROM master..spt_values WHERE type = 'p' AND dateadd(HH, number, #{begintime}) &lt;= #{endtime}) a
+        LEFT JOIN
+        (select * from ST_HP_C where DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))&gt;=#{begintime} and DATEADD(hh,TM,CONVERT(varchar(100), DT, 111)) &lt;= #{endtime}) b
+        on a.dt=DATEADD(hh,b.TM,CONVERT(varchar(100), b.DT, 111))
+        GROUP BY a.dt order by a.dt
+    </select>
+    <!--水位库容曲线-->
+    <select id="selectWlStcpData" resultType="java.util.Map">
+        select STCD,RZ,W,CONVERT(varchar(20),TM,120) TM from st_rsvr_r where tm >CONVERT(varchar(10),GETDATE(),120) order by tm
+    </select>
+    <!--带条件的水位库容曲线-->
+    <select id="selectWlStcpDataByDate" resultType="java.util.Map" parameterType="com.example.table.entity.AlarmParam">
+        select STCD,RZ,W,CONVERT(varchar(20),TM,120) TM  from st_rsvr_r where tm >=#{begintime} and TM &lt;=#{endtime} order by tm
+    </select>
+    <!--闸门开度流量数据-->
+    <select id="selectGateData" resultType="java.util.Map" parameterType="com.example.table.entity.AlarmParam">
+        select b.STCD,B.STNM,isnull(r.OD,0) as OD,isnull(r.Q,0) as Q,TM from ST_STBPRP_B b
+        inner join ST_STBPRP_F f on f.type=6 and b.STCD=f.STCD
+        left join (select STCD,OD,Q,CONVERT(varchar(19), TM, 120) TM  from ST_Gatage_R) r on r.STCD=b.STCD
+    </select>
+    <!--今日雨量-->
+    <select id="selectRainDateInfo" resultType="java.util.Map">
+        select b.*,CONVERT(varchar(100),isnull(c.tm,#{curdate}),120) as TM,isnull(c.P,0) as P,r.ALARMLEVEL,r.ALARMCONTENT from (select STCD,STNM from ST_STBPRP_B) b inner join (select * from ST_STBPRP_F where type=1) f on b.STCD=f.STCD
+        left join (select * from ST_DP_C where tm=#{curdate}) c on b.stcd=c.stcd left join st_realraindata r on b.stcd=r.stcd
+    </select>
+    <!--实时河道水位-->
+    <select id="selectRiverRData" resultType="java.util.Map">
+        select b.*,CONVERT(varchar(100),isnull(c.tm,GETDATE()),120) as TM,isnull(c.Z,0) as Z,(c.Z-r.AWL) as JL,case when c.Z>r.AWL then 1 else 0 end as ALARM from (select STCD,STNM from ST_STBPRP_B) b inner join (select * from ST_STBPRP_F where type=3) f on b.STCD=f.STCD
+        left join (select * from ST_RIVER_R1) c on b.stcd=c.stcd left join ST_RIVER_Alarm r on b.stcd=r.stcd
+    </select>
+    <!--实时水库水位-->
+    <select id="selectRsvrRData" resultType="java.util.Map">
+        select b.*,CONVERT(varchar(100),isnull(c.tm,GETDATE()),120) as TM,isnull(c.RZ,0) as RZ,case when month(GETDATE())&gt;=7 and month(GETDATE())&lt;=9 then c.RZ-FWL79 else c.RZ-FWL end as JL,case when month(GETDATE())&gt;=7 and month(GETDATE())&lt;=9 and c.RZ>FWL79 then 1 when (month(GETDATE())&lt;7 or month(GETDATE())&gt;9) and c.RZ>FWL then 1 else 0 end as ALARM from (select STCD,STNM from ST_STBPRP_B) b inner join (select * from ST_STBPRP_F where type=2) f on b.STCD=f.STCD
+        left join (select * from ST_RSVR_R1) c on b.stcd=c.stcd left join ST_RSV_Alarm r on b.stcd=r.stcd
+    </select>
+    <!--今日雨量-->
+    <select id="selectTodayRainData" resultType="java.util.Map">
+        select STNM,stcd,p,tm from ST_DP_C where tm=convert(char(10), getdate(), 120)
+    </select>
+    <!--入库出库流量和水量-->
+    <select id="selectTodayQandW" resultType="java.util.Map">
+        select 0 as INQ,sum(q) as OTQ,0 as IDW,0 as ODW,convert(char(10),getdate(),120) TM from ST_Gatage_R
+       <!-- select INQ,(select sum(q) from ST_Gatage_R) as OTQ,isnull(IDW,0) IDW,isnull(ODW,0) ODW,convert(char(10),TM,120) TM from ST_RSVR_D where tm=convert(char(10), getdate()-1, 120)-->
+    </select>
+    <!--判断闸门流量数据的日期是否今日更新-->
+    <select id="selectTodayQSign" resultType="java.util.Map">
+         select STNM,STCD,TM,Q,datediff(minute,tm,convert(char(10),getdate(),120)+' 00:00:00') as SIGN from ST_Gatage_R where STCD='6530240018'
+    </select>
+    <!--获取闸门历史信息-->
+    <select id="selectStGatageHByTimeAndStcd" resultType="java.util.Map">
+        select avg(q) as Q,CONVERT(varchar(13),tm,120) as TM from ST_Gatage_H
+        where q is not null and od>0.00 and tm>=convert(char(10),getdate(),120)+' 00:00:00' and tm &lt;=convert(char(10),getdate(),120)+' 23:59:59' and stcd=#{stcd}
+        group by CONVERT(varchar(13),tm,120)
+    </select>
+    <!--根据编号获取闸门历史信息2-->
+    <select id="selectStGatageHByLastAndStcd" resultType="java.util.Map">
+        select top 1 Q,CONVERT(varchar(13),tm,120) as TM,ROW_NUMBER()over(order by tm desc) as RowId from ST_Gatage_H where q is not null and od>0.00 and tm &lt; convert(char(10),getdate(),120)+' 00:00:00' and stcd=#{stcd}
+    </select>
+    <!--根据编号获取今日各小时出库水量-->
+    <select id="selectStGateHByTodayQStcd" resultType="java.util.Map">
+        select sum(AQ*(case when INTERVAL is null then ENDVAL when INTERVAL>ENDVAL then ENDVAL else INTERVAL end)) as SUMQ,sum(case when INTERVAL is null then ENDVAL when INTERVAL>ENDVAL then ENDVAL else INTERVAL end) as SUMVAL,CONVERT(varchar(13),ATM,120) as TM,(select Q from ST_Gatage_H where TM=max(ATM)) as LASTQ,CONVERT(varchar(20),min(ATM),120) as BEGINVAL  from
+        (select datediff(second,a.TM,convert(datetime,CONVERT(varchar(13), a.TM, 120)+':59:59',20)) as ENDVAL,datediff(second,a.TM,b.TM) as INTERVAL,a.TM as ATM,b.TM as BTM,a.Q as AQ,b.Q as BQ from
+        (select Q,TM,id,ROW_NUMBER() OVER(Order by TM) as RowId from ST_Gatage_H where q is not null and od>0.00 and tm>=convert(char(10),getdate(),120)+' 00:00:00' and tm &lt;=convert(char(10),getdate(),120)+' 23:59:59' and STCD=#{stcd}) a
+        full join
+        (select Q,TM,id,ROW_NUMBER() OVER(Order by TM) as RowId from ST_Gatage_H where q is not null and od>0.00 and tm>=convert(char(10),getdate(),120)+' 00:00:00' and tm &lt;=convert(char(10),getdate(),120)+' 23:59:59' and STCD=#{stcd}) b
+        on a.RowId=b.RowId-1 where a.TM is not null) as s  group by CONVERT(varchar(13),ATM,120)
+    </select>
+    <!--获取生态、灌溉和溢洪洞流量站各小时出库水量-->
+    <select id="selectStHCanalCByToday" resultType="java.util.Map">
+        select b.*,isnull(r.A_Q,0) as Q,isnull(r.A_Z,0) as Z,isnull(WQ,0) as WQ,DT,TM
+        from (select STCD,STNM from ST_STBPRP_B where stcd in('6530240004','6530240005','6530240019')) b inner join (select * from ST_STBPRP_F where type=4) f on b.STCD=f.STCD
+        inner join (select * from ST_HCanal_C where stcd in('6530240004','6530240005','6530240019') and DT=convert(char(10),getdate(),120)) r on b.STCD=r.STCD
+    </select>
+    <!--获取今日入库流量站小时信息-->
+    <select id="selectStRiverHByToday" resultType="java.util.Map">
+        select DT,TM,RZ from ST_RIVER_H where DT=CONVERT(varchar(10),getdate(),120)
+    </select>
+    <!--获取水库库容小时水量增量信息-->
+    <select id="selectStRsvrHByToday" resultType="java.util.Map">
+        select b.HW-a.Hw as HW,b.DT,b.TM from
+        (select * from st_rsvr_h where DT=CONVERT(varchar(10),getdate(),120) or (DT=CONVERT(varchar(10),getdate()-1,120) and tm=23)) a
+        full join
+        (select * from st_rsvr_h where DT=CONVERT(varchar(10),getdate(),120) or (DT=CONVERT(varchar(10),getdate()-1,120) and tm=23)) b
+        on a.id=b.id-1 where a.HW is not null and b.HW is not null
+    </select>
+    <!--河道水位2小时变化值-->
+    <select id="selectChangeRiverData" resultType="java.util.Map">
+        select b.*,c.Z,CONVERT(varchar(100),c.TM,120) as TM,isnull(r.MAXZ,c.Z)-c.Z as DOWNZ,c.Z-isnull(r.MINZ,c.Z) as UPZ from (select STCD,STNM from ST_STBPRP_B) b inner join (select * from ST_STBPRP_F where type=3) f on b.STCD=f.STCD
+        left join (select * from ST_RIVER_R1) c on b.stcd=c.stcd
+        left join (select STCD,max(Z) as MAXZ,min(Z) as MINZ from ST_RIVER_R where TM between dateadd(hour,-2,GETDATE()) and GETDATE() group by STCD) r on b.stcd=r.stcd
+    </select>
+    <!--水库水位2小时变化值-->
+    <select id="selectChangeRsvrRData" resultType="java.util.Map">
+        select b.*,c.RZ,CONVERT(varchar(100),c.TM,120) as TM,isnull(r.MAXRZ,c.RZ)-c.RZ as DOWNRZ,c.RZ-isnull(r.MINRZ,c.RZ) as UPRZ from (select STCD,STNM from ST_STBPRP_B) b inner join (select * from ST_STBPRP_F where type=2) f on b.STCD=f.STCD
+        left join (select * from ST_RSVR_R1) c on b.stcd=c.stcd
+        left join (select STCD,max(RZ) as MAXRZ,min(RZ) as MINRZ from ST_RSVR_R where TM between dateadd(hour,-2,GETDATE()) and GETDATE() group by STCD) r on b.stcd=r.stcd
+    </select>
+    <!--最新1小时EXCEL导出SQL-->
+    <!--当前水位，当前库容-->
+    <select id="selectLastSwAndKrHour" resultType="java.util.Map">
+        select top 1 RZ,W,TM from st_rsvr_r where tm &lt; convert(char(13),getdate(),120)+':00:00' order by tm desc
+    </select>
+    <!--闸门开度信息-->
+    <select id="selectZmKdHourInfo" resultType="java.util.Map">
+        select b.STCD,B.STNM,isnull(c.OD,0) as OD,isnull(c.Q,0) as Q,TM from ST_STBPRP_B b
+        inner join ST_STBPRP_F f on f.type=6 and b.STCD=f.STCD
+        left join (select L.STCD,L.OD,L.Q,CONVERT(varchar(19), L.TM, 120) as TM  from ST_Gatage_H as L
+        inner join (select STCD,max(TM) as TM from ST_Gatage_H R where od>0.00 and TM &lt; convert(char(13),getdate(),120)+':00:00' group by STCD) R
+        on L.STCD=R.STCD and L.TM=R.TM) c on c.STCD=b.STCD
+    </select>
+    <!--当前小时累计雨量-->
+    <select id="selectSumRainHourInfo" resultType="java.util.Map">
+        select b.STCD,b.STNM,isnull(c.P,0) as P from ST_STBPRP_B b inner join (select * from ST_STBPRP_F where type=1) f on b.STCD=f.STCD
+        left join (select * from ST_HP_C where DT=convert(char(10),getdate(),120) and TM=CONVERT(INT, CONVERT(varchar(2),getdate(), 108))-1) c on b.stcd=c.stcd
+    </select>
+    <!--生态用水流量站  水深、流量、水量-->
+    <select id="selectStllSiteHourInfo" resultType="java.util.Map">
+        select b.*,isnull(r.A_Q,0) as Q,isnull(r.A_Z,0) as Z,isnull(WQ,0) as WQ,DT,TM
+from (select STCD,STNM from ST_STBPRP_B where stcd in('6530240004','6530240005','6530240019','6530240020')) b inner join (select * from ST_STBPRP_F where type=4) f on b.STCD=f.STCD
+left join (select * from ST_HCanal_C where stcd in('6530240004','6530240005','6530240019','6530240020') and DT=convert(char(10),getdate(),120) and TM=CONVERT(INT, CONVERT(varchar(2),getdate(), 108))-1) r on b.STCD=r.STCD
+    </select>
+    <!--入库流量站水位-->
+    <select id="selectInSiteHourSw" resultType="java.util.Map">
+        select STNM,STCD,RZ,DT,TM from ST_RIVER_H where DT=convert(char(10),getdate(),120) and TM=CONVERT(INT, CONVERT(varchar(2),getdate(), 108))-1
+    </select>
+    <!--获取小时库容增量-->
+    <select id="selectKwAddHour" resultType="java.util.Map">
+        select b.HW-a.Hw as HW,b.DT,b.TM from
+        (select * from st_rsvr_h where DT=CONVERT(varchar(10),getdate(),120) and TM between CONVERT(INT, CONVERT(varchar(2),getdate(), 108))-2 and CONVERT(INT, CONVERT(varchar(2),getdate(), 108))-1) a
+        full join
+        (select * from st_rsvr_h where DT=CONVERT(varchar(10),getdate(),120) and TM between CONVERT(INT, CONVERT(varchar(2),getdate(), 108))-2 and CONVERT(INT, CONVERT(varchar(2),getdate(), 108))-1) b
+        on a.id=b.id-1 where a.HW is not null and b.HW is not null
+    </select>
+    <!--判断最新小时是否有流量更新-->
+    <select id="selectReflashHour" resultType="java.util.Map">
+        select STNM,STCD,TM,isnull(Q,0) as Q,datediff(minute,tm,convert(char(13),DATEADD(HOUR, -1, GETDATE()),120)+':00:00') as SIGN from ST_Gatage_R  where stcd='6530240018'
+    </select>
+    <!--闸门出库流量和出库水量-->
+    <select id="selectOutWAndSLHour" resultType="java.util.Map">
+        select sum(AQ*(case when INTERVAL is null then ENDVAL when INTERVAL>ENDVAL then ENDVAL else INTERVAL end)) as SUMQ,sum(case when INTERVAL is null then ENDVAL when INTERVAL>ENDVAL then ENDVAL else INTERVAL end) as SUMVAL,CONVERT(varchar(13),ATM,120) as TM,(select Q from ST_Gatage_H where TM=max(ATM)) as LASTQ  from
+        (select datediff(second,a.TM,convert(datetime,CONVERT(varchar(13), a.TM, 120)+':59:59',20)) as ENDVAL,datediff(second,a.TM,b.TM) as INTERVAL,a.TM as ATM,b.TM as BTM,a.Q as AQ,b.Q as BQ from
+        (select isnull(Q,0) as Q,TM,id,ROW_NUMBER() OVER(Order by TM) as RowId from ST_Gatage_H where q is not null and od>0.00 and tm>=convert(char(13),DATEADD(HOUR, -2, GETDATE()),120)+':00:00' and tm &lt;=convert(char(13),DATEADD(HOUR, -1, GETDATE()),120)+':59:59' and STCD=#{stcd}) a
+        full join
+        (select isnull(Q,0) as Q,TM,id,ROW_NUMBER() OVER(Order by TM) as RowId from ST_Gatage_H where q is not null and od>0.00 and tm>=convert(char(13),DATEADD(HOUR, -2, GETDATE()),120)+':00:00' and tm &lt;=convert(char(13),DATEADD(HOUR, -1, GETDATE()),120)+':59:59' and STCD=#{stcd}) b
+        on a.RowId=b.RowId-1 where a.TM is not null) as s  group by CONVERT(varchar(13),ATM,120)
+    </select>
+    <!--当前前1小时有数据，前2个小时无数据，获取2小时前最新数据-->
+    <select id="selectBeforeTwoHourData" resultType="java.util.Map">
+        select top 1 isnull(Q,0) as Q,TM,id,1 as RowId from ST_Gatage_H where q is not null and od>0.00 and tm &lt; convert(char(13),DATEADD(HOUR, -2, GETDATE()),120)+':00:00' and STCD=#{stcd}
+        order by tm desc
+    </select>
+    <!--水库小时信息-->
+    <select id="selectStRsvrHByHours" parameterType="com.example.table.entity.AlarmParam" resultType="java.util.Map">
+        SELECT CONVERT(VARCHAR(13),a.dt,120) AS DT, b.*, ROW_NUMBER() OVER(Order by a.dt desc) AS RowId
+        FROM
+        (
+        SELECT
+        dateadd(HH, number, #{begintime}) dt
+        FROM
+        master..spt_values
+        WHERE
+        type = 'p'
+        AND dateadd(HH, number, #{begintime}) &lt;=#{endtime}
+        ) a
+        LEFT JOIN (
+        select DATEADD(hh,m.TM,CONVERT(varchar(100), m.DT, 111)) as TEMP,isnull(m.HW-s.HW,0) as HW,case when m.CV>0 then '↑' when m.CV &lt;0 then '↓' else '-' end as CV,m.INQ,m.OTQ,cast(Convert(decimal(10,2),m.RZ) as varchar) as RZ,cast(Convert(decimal(10,2),m.HW) as varchar) as KR from
+        (select ID,DT,TM,RZ,INQ,OTQ,HW,CV FROM ST_RSVR_H where DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))>=#{addtion1} and DATEADD(hh,TM,CONVERT(varchar(100), DT, 111)) &lt;=#{addtion2}) s
+        full join
+        (select ID,DT,TM,RZ,INQ,OTQ,HW,CV FROM ST_RSVR_H where DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))>=#{begintime} and DATEADD(hh,TM,CONVERT(varchar(100), DT, 111)) &lt;=#{endtime}) m
+        on s.id=m.id-1 where m.DT is not null) b
+        ON a.dt = b.TEMP
+    </select>
+    <!--当前时间水库没有记录，取前一条记录-->
+    <select id="selectStRsvrHByBefore" parameterType="com.example.table.entity.AlarmParam" resultType="java.util.Map">
+        select top 1 DT,TM,cast(Convert(decimal(10,2),RZ) as varchar) as RZ,INQ,OTQ,0.00 as HW,case when CV>0 then '↑' when CV &lt;0 then '↓' else '-' end as CV,cast(Convert(decimal(10,2),HW) as varchar) as KR from ST_RSVR_H where DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))&lt;#{begintime} order by ID desc
+    </select>
+    <!--获取水库站点蓄水位和汛限水位-->
+    <select id="selectWaterSiteSwByStRsvr" resultType="java.util.Map">
+        select b.STNM,b.STCD,'4-6月：'+cast(Convert(decimal(10,2),a.FWL) as varchar)+' 7-9月：'+cast(Convert(decimal(10,2),a.FWL79) as varchar) as FWL,cast(Convert(decimal(10,2),a.ZCWL) as varchar) as ZCWL from ST_STBPRP_B b inner join ST_STBPRP_F f on f.type=2 and b.stcd=f.stcd left join ST_RSVR_R1 r on r.stcd=b.stcd
+left join ST_RSV_Alarm a on b.STCD=a.STCD
+    </select>
+    <!--灌溉、生态和溢洪洞流量小时信息-->
+    <select id="selectGSYllByTime" parameterType="com.example.table.entity.AlarmParam" resultType="java.util.Map">
+        SELECT CONVERT(VARCHAR(13),a.dt,120) AS DT, b.Q,b.WQ, ROW_NUMBER() OVER(Order by a.dt desc) AS RowId
+        FROM
+        (
+        SELECT
+        dateadd(HH, number, #{begintime}) dt
+        FROM
+        master..spt_values
+        WHERE
+        type = 'p'
+        AND dateadd(HH, number, #{begintime}) &lt;= #{endtime}
+        ) a
+        LEFT JOIN (
+        select sum(A_Q) as Q,sum(WQ) as WQ,DATEADD(hh,TM,CONVERT(varchar(100), DT, 111)) as DT from ST_HCanal_C where stcd in('6530240004','6530240005','6530240019') and DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))>=#{begintime} and DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))&lt;=#{endtime}
+        group by DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))
+        ) as b on a.dt=b.DT
+    </select>
+    <!--任意时间段是否有开度信息更新-->
+    <select id="selectDldSignByTime" parameterType="com.example.table.entity.AlarmParam" resultType="java.util.Map">
+        select STNM,STCD,TM,Q,datediff(minute,tm,#{begintime}) as SIGN from ST_Gatage_R where STCD='6530240018'
+    </select>
+    <!--任意时间段第0个数组的流量-->
+    <select id="selectZeroDldLlByTime" parameterType="com.example.table.entity.AlarmParam" resultType="java.util.Map">
+        select top 1 Q,CONVERT(varchar(13),tm,120) as TM,ROW_NUMBER()over(order by tm desc) as RowId from ST_Gatage_H where q is not null and od>0.00 and tm &lt;= #{begintime} and stcd='6530240018'
+    </select>
+    <!--任意时间段导流洞流量和水量-->
+    <select id="selectDldQAndWByTime" parameterType="com.example.table.entity.AlarmParam" resultType="java.util.Map">
+        select sum(AQ*(case when INTERVAL is null then ENDVAL when INTERVAL>ENDVAL then ENDVAL else INTERVAL end)) as SUMQ,sum(case when INTERVAL is null then ENDVAL when INTERVAL>ENDVAL then ENDVAL else INTERVAL end) as SUMVAL,CONVERT(varchar(13),ATM,120) as TM,(select Q from ST_Gatage_H where TM=max(ATM)) as LASTQ,CONVERT(varchar(20),min(ATM),120) as BEGINVAL  from
+        (select datediff(second,a.TM,convert(datetime,CONVERT(varchar(13), a.TM, 120)+':59:59',20)) as ENDVAL,datediff(second,a.TM,b.TM) as INTERVAL,a.TM as ATM,b.TM as BTM,a.Q as AQ,b.Q as BQ from
+        (select Q,TM,id,ROW_NUMBER() OVER(Order by TM) as RowId from ST_Gatage_H where q is not null and od>0.00 and tm>=#{begintime} and tm &lt;=#{endtime} and STCD='6530240018') a
+        full join
+        (select Q,TM,id,ROW_NUMBER() OVER(Order by TM) as RowId from ST_Gatage_H where q is not null and od>0.00 and tm>=#{begintime} and tm &lt;=#{endtime} and STCD='6530240018') b
+        on a.RowId=b.RowId-1 where a.TM is not null) as s  group by CONVERT(varchar(13),ATM,120)  order by TM
+    </select>
+    <!--任意时间段入库流量-->
+    <select id="selectInWQByTime" parameterType="com.example.table.entity.AlarmParam" resultType="java.util.Map">
+        SELECT CONVERT(VARCHAR(13),a.dt,120) AS DT, b.RZ, ROW_NUMBER() OVER(Order by a.dt desc) AS RowId
+        FROM
+        (
+        SELECT
+        dateadd(HH, number, #{begintime}) dt
+        FROM
+        master..spt_values
+        WHERE
+        type = 'p'
+        AND dateadd(HH, number, #{begintime}) &lt;= #{endtime}
+        ) a
+        LEFT JOIN (
+        select DATEADD(hh,TM,CONVERT(varchar(100), DT, 111)) as DT,RZ from ST_RIVER_H where DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))>=#{begintime} and DATEADD(hh,TM,CONVERT(varchar(100), DT, 111))&lt;=#{endtime}
+        ) as b on a.dt=b.DT
+    </select>
+    <!--获取渠道站点对应渠道站点-->
+    <select id="selectQudaoInfo" resultType="java.util.Map">
+         select distinct Canal_Code,Canal_Name,Upper_Canal_Code from WRP_IrrBTCanalSystem where Canal_Code in(select Upper_Canal_Code from WRP_IrrBTCanalSystem where Canal_Code in(select distinct BaseID from ST_STINFO_WRP WHERE FormID = 'WRP_IrrBTCanalSystem' and STCD in (select stcd from ST_STBPRP_F f where f.type = 4)))
+         union
+         select Canal_Code,Canal_Name,Upper_Canal_Code from WRP_IrrBTCanalSystem where Canal_Code in(select distinct BaseID from ST_STINFO_WRP WHERE FormID = 'WRP_IrrBTCanalSystem' and STCD in (select stcd from ST_STBPRP_F f where f.type = 4))
+         union
+         select 'Vother' as Canal_Code,'其他' as Canal_Name, '-1' as Upper_Canal_Code
+    </select>
+    <!--获取所有渠道站点信息-->
+    <select id="selectAllQdSiteInfo" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        select b.STCD,b.STNM from ST_STBPRP_B b
+         INNER JOIN ST_STBPRP_F f ON f.type = 4 AND b.stcd = f.stcd
+        LEFT JOIN ST_Canal_R1 r ON r.stcd = b.stcd
+        <if test="sitetype != null &amp;&amp; sitetype>0">
+            where STYPE=#{sitetype}
+        </if>
+    </select>
+    <!--根据条件获取渠道站点信息-->
+    <select id="selectQudaoSiteInfo" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+        select b.STCD,b.STNM from ST_STBPRP_B b
+         INNER JOIN ST_STBPRP_F f ON f.type = 4 AND b.stcd = f.stcd
+         LEFT JOIN ST_Canal_R1 r ON r.stcd = b.stcd
+         where b.stcd in(select stcd from ST_STINFO_WRP w where FormID='WRP_IrrBTCanalSystem' and (w.BaseID=#{meCode} or w.BaseID in(select Canal_Code from dbo.fn_getCanalChild('${meCode}'))))
+        <if test="sitetype != null &amp;&amp; sitetype>0">
+           and STYPE=#{sitetype}
+        </if>
+    </select>
+    <!--根据条件获取无渠道站点信息-->
+    <select id="selectOtherQudaoSiteInfo" parameterType="com.example.table.entity.MedataParam" resultType="java.util.Map">
+         select b.STCD,b.STNM from ST_STBPRP_B b
+         INNER JOIN ST_STBPRP_F f ON f.type = 4 AND b.stcd = f.stcd
+         LEFT JOIN ST_Canal_R1 r ON r.stcd = b.stcd
+         where b.STCD not in( SELECT stcd FROM ST_STINFO_WRP w WHERE FormID = 'WRP_IrrBTCanalSystem')
+        <if test="sitetype != null &amp;&amp; sitetype>0">
+            and STYPE=#{sitetype}
+        </if>
+    </select>
+</mapper>
