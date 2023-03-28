@@ -1,5 +1,6 @@
 package com.example.table.controller;
 import com.example.table.pojo.StChanalR;
+import com.example.table.pojo.StHCanalC;
 import com.example.table.pojo.WaterParam;
 import com.example.table.service.StCanalRService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,5 +57,36 @@ public class StCanalRController {
         waterParam.setOrderBy("TM");
         waterParam.setSequence("asc");
         return stCanalRService.selectStCanalHistoryByPage(waterParam);
+    }
+    //实时小时水量数据
+    @ResponseBody
+    @RequestMapping(value="/hourcanalwater",method = RequestMethod.GET)
+    public List<StHCanalC> getHourCanalWater(WaterParam waterParam){
+        List<StHCanalC> list=stCanalRService.selectStHCanalCInfo(waterParam);
+        return list;
+    }
+    //分页查询小时水量数据
+    @ResponseBody
+    @RequestMapping(value="/hishourwater",method = RequestMethod.GET)
+    public Map<String,Object> getHishourCanalWater(WaterParam waterParam){
+        Integer count=stCanalRService.selectStHCanalCHisByCount(waterParam);
+        List<StHCanalC> list=new ArrayList<>();
+        if(count>0){
+            list=stCanalRService.selectStHCanalCHisByPage(waterParam);
+        }
+        Map<String,Object> map=new HashMap<>();
+        map.put("total",count);
+        map.put("rows",list);
+        return map;
+    }
+    //历史小时水量过程图数据
+    @ResponseBody
+    @RequestMapping(value="/hishourchart",method = RequestMethod.GET)
+    public List<StHCanalC> getHishourWaterChart(WaterParam waterParam){
+        waterParam.setBegincount(1);
+        waterParam.setEndcount(999999);
+        waterParam.setSequence("asc");
+        List<StHCanalC> list=stCanalRService.selectStHCanalCHisByPage(waterParam);
+        return list;
     }
 }

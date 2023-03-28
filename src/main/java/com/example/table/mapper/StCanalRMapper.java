@@ -2,6 +2,7 @@ package com.example.table.mapper;
 
 import com.example.table.pojo.StChanalR;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.example.table.pojo.StHCanalC;
 import com.example.table.pojo.WaterParam;
 import org.springframework.stereotype.Component;
 
@@ -20,4 +21,10 @@ public interface StCanalRMapper extends BaseMapper<StChanalR> {
     Integer selectStCanalHistoryByCount(WaterParam waterParam);
     //分页查询监测历史数据
     List<StChanalR> selectStCanalHistoryByPage(WaterParam waterParam);
+    //实时小时水量数据
+    List<StHCanalC> selectStHCanalCInfo(WaterParam waterParam);
+    //历史小时水量分析总记录数
+    Integer selectStHCanalCHisByCount(WaterParam waterParam);
+    //历史小时水量分析分页
+    List<StHCanalC> selectStHCanalCHisByPage(WaterParam waterParam);
 }

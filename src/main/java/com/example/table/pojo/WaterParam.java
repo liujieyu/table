@@ -9,6 +9,8 @@ public class WaterParam {
     private String begintime;  //开始时间
     private String endtime;    //结束时间
     private String showsign;   //水协会标识
+    private String dt;         //日期
+    private int tm;         //小时
     //分页开始记录数
     private int begincount=1;
     //分页结束记录数
@@ -87,5 +89,21 @@ public class WaterParam {
 
     public void setStcd(String stcd) {
         this.stcd = stcd;
+    }
+
+    public String getDt() {
+        return dt;
+    }
+
+    public void setDt(String dt) {
+        this.dt = dt;
+    }
+
+    public int getTm() {
+        return tm;
+    }
+
+    public void setTm(int tm) {
+        this.tm = tm;
     }
 }
