@@ -1,5 +1,6 @@
 package com.example.table.controller;
 import com.example.table.pojo.StChanalR;
+import com.example.table.pojo.StDCanalC;
 import com.example.table.pojo.StHCanalC;
 import com.example.table.pojo.WaterParam;
 import com.example.table.service.StCanalRService;
@@ -87,6 +88,37 @@ public class StCanalRController {
         waterParam.setEndcount(999999);
         waterParam.setSequence("asc");
         List<StHCanalC> list=stCanalRService.selectStHCanalCHisByPage(waterParam);
+        return list;
+    }
+    //实时日水量数据
+    @ResponseBody
+    @RequestMapping(value="/daycanalwater",method = RequestMethod.GET)
+    public List<StDCanalC> getDayCanalWater(WaterParam waterParam){
+        List<StDCanalC> list=stCanalRService.selectDCanalCInfo(waterParam);
+        return list;
+    }
+    //分页查询日水量数据
+    @ResponseBody
+    @RequestMapping(value="/hisdaywater",method = RequestMethod.GET)
+    public Map<String,Object> getHisdayCanalWater(WaterParam waterParam){
+        Integer count=stCanalRService.selectStDCanalCHisByCount(waterParam);
+        List<StDCanalC> list=new ArrayList<>();
+        if(count>0){
+            list=stCanalRService.selectDCanalCHisByPage(waterParam);
+        }
+        Map<String,Object> map=new HashMap<>();
+        map.put("total",count);
+        map.put("rows",list);
+        return map;
+    }
+    //历史日水量过程图数据
+    @ResponseBody
+    @RequestMapping(value="/hisdaychart",method = RequestMethod.GET)
+    public List<StDCanalC> getHisdayWaterChart(WaterParam waterParam){
+        waterParam.setBegincount(1);
+        waterParam.setEndcount(999999);
+        waterParam.setSequence("asc");
+        List<StDCanalC> list=stCanalRService.selectDCanalCHisByPage(waterParam);
         return list;
     }
 }

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.table.mapper.StCanalRMapper">
 
-    <!-- 通用查询映射结果 -->
+    <!-- 水情监控查询映射结果 -->
     <resultMap id="StCanalRResultMap" type="com.example.table.pojo.StChanalR">
         <result column="ID" property="id" />
         <result column="STCD" property="stcd" />
@@ -13,12 +13,38 @@
         <result column="WPTN" property="wptn" />
         <result column="RowId" property="index" />
     </resultMap>
+    <!--小时水量查询映射结果-->
+    <resultMap id="StHCanalCResultMap" type="com.example.table.pojo.StHCanalC">
+        <result column="ID" property="id" />
+        <result column="STCD" property="stcd" />
+        <result column="STNM" property="stnm" />
+        <result column="RowId" property="index" />
+        <result column="A_Q" property="aq" />
+        <result column="A_Z" property="az" />
+        <result column="WQ" property="wq" />
+        <result column="DT" property="dt" />
+    </resultMap>
+    <!--日水量查询映射结果-->
+    <resultMap id="StDCanalCResultMap" type="com.example.table.pojo.StDCanalC">
+        <result column="ID" property="id" />
+        <result column="STCD" property="stcd" />
+        <result column="STNM" property="stnm" />
+        <result column="RowId" property="index" />
+        <result column="DA_Q" property="daq" />
+        <result column="DA_Z" property="daz" />
+        <result column="DWQ" property="dwq" />
+        <result column="TM" property="tm" />
+    </resultMap>
 
     <!--查询实时监测数据-->
     <select id="selectStCanalR1Info" parameterType="com.example.table.pojo.WaterParam" resultMap="StCanalRResultMap">
         select b.STCD,b.STNM,Convert(varchar(16),r.TM,120) as TM,r.Q,r.Z,WPTN,ROW_NUMBER() OVER(Order by b.PX asc) AS RowId from
         (select * from WATER_SITE_B where SYSSIGN=#{showsign}) b inner join ST_Canal_R1 r on b.STCD=r.STCD
-        where b.STNM like '%'+#{stnm}+'%'
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                b.STNM like '%'+#{stnm}+'%'
+            </if>
+        </where>
     </select>
     <!--查询监测历史数据总记录数-->
     <select id="selectStCanalHistoryByCount" parameterType="com.example.table.pojo.WaterParam" resultType="java.lang.Integer">
@@ -45,5 +71,79 @@
             </if>
         </where>
         )as b where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--实时小时水量数据-->
+    <select id="selectStHCanalCInfo" parameterType="com.example.table.pojo.WaterParam" resultMap="StHCanalCResultMap">
+       select b.STCD,b.STNM,Convert(varchar(10),r.DT,120)+' '+RIGHT('00'+convert(varchar,r.TM),2) as DT,r.A_Q,r.A_Z,r.WQ,ROW_NUMBER() OVER(Order by b.PX asc) AS RowId from
+       (select * from WATER_SITE_B where SYSSIGN=#{showsign}) b left join (select * from ST_HCanal_C where DT=#{dt} and tm=#{tm}) r on b.STCD=r.STCD
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                b.STNM like '%'+#{stnm}+'%'
+            </if>
+        </where>
+    </select>
+    <!--历史小时水量分析总记录数-->
+    <select id="selectStHCanalCHisByCount" parameterType="com.example.table.pojo.WaterParam" resultType="java.lang.Integer">
+        select count(*) from ST_HCanal_C
+        <where>
+            <if test="stcd!= null and stcd!= ''">
+                STCD = #{stcd}
+            </if>
+            <if test="begintime!= null and begintime!= ''and endtime!= null and endtime!= ''">
+                and DATEADD(hh,TM,CONVERT(varchar(100), DT, 111)) &gt;='${begintime}'
+                and DATEADD(hh,TM,CONVERT(varchar(100), DT, 111)) &lt;='${endtime}'
+            </if>
+        </where>
+    </select>
+    <!--历史小时水量分析分页-->
+    <select id="selectStHCanalCHisByPage" parameterType="com.example.table.pojo.WaterParam" resultMap="StHCanalCResultMap">
+        select * from (select CONVERT(VARCHAR(13),DATEADD(hh,TM,CONVERT(varchar(100), DT, 111)),120) as DT,A_Q,A_Z,WQ, ROW_NUMBER() OVER(Order by DATEADD(hh,tm,dt) ${sequence}) AS RowId
+        from ST_HCanal_C
+        <where>
+            <if test="stcd!= null and stcd!= ''">
+                STCD = #{stcd}
+            </if>
+            <if test="begintime!= null and begintime!= ''and endtime!= null and endtime!= ''">
+                and DATEADD(hh,TM,CONVERT(varchar(100), DT, 111)) &gt;='${begintime}'
+                and DATEADD(hh,TM,CONVERT(varchar(100), DT, 111)) &lt;='${endtime}'
+            </if>
+        </where>
+        ) as b where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--实时日水量数据-->
+    <select id="selectDCanalCInfo" parameterType="com.example.table.pojo.WaterParam" resultMap="StDCanalCResultMap">
+        select b.STCD,b.STNM,r.TM,r.DA_Q,r.DA_Z,r.DWQ,ROW_NUMBER() OVER(Order by b.PX asc) AS RowId from
+        (select * from WATER_SITE_B where SYSSIGN='WX') b left join (select * from ST_DCanal_C where TM=#{dt}) r on b.STCD=r.STCD
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                b.STNM like '%'+#{stnm}+'%'
+            </if>
+        </where>
+    </select>
+    <!--历史日水量分析总记录数-->
+    <select id="selectStDCanalCHisByCount" parameterType="com.example.table.pojo.WaterParam" resultType="java.lang.Integer">
+        select count(*) from ST_DCanal_C
+        <where>
+            <if test="stcd!= null and stcd!= ''">
+                STCD = #{stcd}
+            </if>
+            <if test="begintime!= null and begintime!= ''and endtime!= null and endtime!= ''">
+                and TM &gt;= '${begintime}' and TM &lt;='${endtime}'
+            </if>
+        </where>
+    </select>
+    <!--历史日水量分析分页-->
+    <select id="selectDCanalCHisByPage" parameterType="com.example.table.pojo.WaterParam" resultMap="StDCanalCResultMap">
+        select * from (select TM,DA_Q,DA_Z,DWQ, ROW_NUMBER() OVER(Order by tm ${sequence}) AS RowId
+        from ST_DCanal_C
+        <where>
+            <if test="stcd!= null and stcd!= ''">
+                STCD = #{stcd}
+            </if>
+            <if test="begintime!= null and begintime!= ''and endtime!= null and endtime!= ''">
+                and TM &gt;= '${begintime}' and TM &lt;='${endtime}'
+            </if>
+        </where>
+        ) as b where RowId between #{begincount} and #{endcount}
     </select>
 </mapper>

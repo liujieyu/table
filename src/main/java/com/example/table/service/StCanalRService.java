@@ -2,6 +2,7 @@ package com.example.table.service;
 
 import com.example.table.pojo.StChanalR;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.example.table.pojo.StDCanalC;
 import com.example.table.pojo.StHCanalC;
 import com.example.table.pojo.WaterParam;
 
@@ -28,4 +29,10 @@ public interface StCanalRService extends IService<StChanalR> {
     Integer selectStHCanalCHisByCount(WaterParam waterParam);
     //历史小时水量分析分页
     List<StHCanalC> selectStHCanalCHisByPage(WaterParam waterParam);
+    //实时日水量数据
+    List<StDCanalC> selectDCanalCInfo(WaterParam waterParam);
+    //历史日水量分析总记录数
+    Integer selectStDCanalCHisByCount(WaterParam waterParam);
+    //历史日水量分析分页
+    List<StDCanalC> selectDCanalCHisByPage(WaterParam waterParam);
 }

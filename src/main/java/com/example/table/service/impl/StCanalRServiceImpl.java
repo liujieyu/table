@@ -2,6 +2,7 @@ package com.example.table.service.impl;
 
 import com.example.table.pojo.StChanalR;
 import com.example.table.mapper.StCanalRMapper;
+import com.example.table.pojo.StDCanalC;
 import com.example.table.pojo.StHCanalC;
 import com.example.table.pojo.WaterParam;
 import com.example.table.service.StCanalRService;
@@ -46,5 +47,17 @@ public class StCanalRServiceImpl extends ServiceImpl<StCanalRMapper, StChanalR> 
     //历史小时水量分析分页
     public List<StHCanalC> selectStHCanalCHisByPage(WaterParam waterParam){
         return stCanalRMapper.selectStHCanalCHisByPage(waterParam);
+    }
+    //实时日水量数据
+    public List<StDCanalC> selectDCanalCInfo(WaterParam waterParam){
+        return stCanalRMapper.selectDCanalCInfo(waterParam);
+    }
+    //历史日水量分析总记录数
+    public Integer selectStDCanalCHisByCount(WaterParam waterParam){
+        return stCanalRMapper.selectStDCanalCHisByCount(waterParam);
+    }
+    //历史日水量分析分页
+    public List<StDCanalC> selectDCanalCHisByPage(WaterParam waterParam){
+        return stCanalRMapper.selectDCanalCHisByPage(waterParam);
     }
 }
