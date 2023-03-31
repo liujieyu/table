@@ -1,10 +1,7 @@
 package com.example.table.service.impl;
 
-import com.example.table.pojo.StChanalR;
+import com.example.table.pojo.*;
 import com.example.table.mapper.StCanalRMapper;
-import com.example.table.pojo.StDCanalC;
-import com.example.table.pojo.StHCanalC;
-import com.example.table.pojo.WaterParam;
 import com.example.table.service.StCanalRService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,5 +56,17 @@ public class StCanalRServiceImpl extends ServiceImpl<StCanalRMapper, StChanalR> 
     //历史日水量分析分页
     public List<StDCanalC> selectDCanalCHisByPage(WaterParam waterParam){
         return stCanalRMapper.selectDCanalCHisByPage(waterParam);
+    }
+    //实时月水量数据
+    public List<StMCanalC> selectMCananlCInfo(WaterParam waterParam){
+        return stCanalRMapper.selectMCananlCInfo(waterParam);
+    }
+    //历史月水量分析总记录数
+    public Integer selectMCananlCHisByCount(WaterParam waterParam){
+        return stCanalRMapper.selectMCananlCHisByCount(waterParam);
+    }
+    //历史月水量分析分页
+    public List<StMCanalC> selectMCananlCHisByPage(WaterParam waterParam){
+        return stCanalRMapper.selectMCananlCHisByPage(waterParam);
     }
 }

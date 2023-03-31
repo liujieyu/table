@@ -1,8 +1,5 @@
 package com.example.table.controller;
-import com.example.table.pojo.StChanalR;
-import com.example.table.pojo.StDCanalC;
-import com.example.table.pojo.StHCanalC;
-import com.example.table.pojo.WaterParam;
+import com.example.table.pojo.*;
 import com.example.table.service.StCanalRService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -119,6 +116,37 @@ public class StCanalRController {
         waterParam.setEndcount(999999);
         waterParam.setSequence("asc");
         List<StDCanalC> list=stCanalRService.selectDCanalCHisByPage(waterParam);
+        return list;
+    }
+    //实时月水量数据
+    @ResponseBody
+    @RequestMapping(value="/monthcanalwater",method = RequestMethod.GET)
+    public List<StMCanalC> getMonthCanalWater(WaterParam waterParam){
+        List<StMCanalC> list=stCanalRService.selectMCananlCInfo(waterParam);
+        return list;
+    }
+    //分页查询月水量数据
+    @ResponseBody
+    @RequestMapping(value="/hismonthwater",method = RequestMethod.GET)
+    public Map<String,Object> getHisMonthCanalWater(WaterParam waterParam){
+        Integer count=stCanalRService.selectMCananlCHisByCount(waterParam);
+        List<StMCanalC> list=new ArrayList<>();
+        if(count>0){
+            list=stCanalRService.selectMCananlCHisByPage(waterParam);
+        }
+        Map<String,Object> map=new HashMap<>();
+        map.put("total",count);
+        map.put("rows",list);
+        return map;
+    }
+    //历史月水量过程图数据
+    @ResponseBody
+    @RequestMapping(value="/hismonthchart",method = RequestMethod.GET)
+    public List<StMCanalC> getHismonthWaterChart(WaterParam waterParam) {
+        waterParam.setBegincount(1);
+        waterParam.setEndcount(999999);
+        waterParam.setSequence("asc");
+        List<StMCanalC> list=stCanalRService.selectMCananlCHisByPage(waterParam);
         return list;
     }
 }

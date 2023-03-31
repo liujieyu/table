@@ -10,7 +10,9 @@ public class WaterParam {
     private String endtime;    //结束时间
     private String showsign;   //水协会标识
     private String dt;         //日期
-    private int tm;         //小时
+    private int tm;            //小时
+    private int year;          //年
+    private int month;         //月
     //分页开始记录数
     private int begincount=1;
     //分页结束记录数
@@ -105,5 +107,21 @@ public class WaterParam {
 
     public void setTm(int tm) {
         this.tm = tm;
+    }
+
+    public int getYear() {
+        return year;
+    }
+
+    public void setYear(int year) {
+        this.year = year;
+    }
+
+    public int getMonth() {
+        return month;
+    }
+
+    public void setMonth(int month) {
+        this.month = month;
     }
 }

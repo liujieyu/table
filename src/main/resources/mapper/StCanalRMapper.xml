@@ -35,6 +35,17 @@
         <result column="DWQ" property="dwq" />
         <result column="TM" property="tm" />
     </resultMap>
+    <!--月水量查询映射结果-->
+    <resultMap id="StMCanalCResultMap" type="com.example.table.pojo.StMCanalC">
+        <result column="ID" property="id" />
+        <result column="STCD" property="stcd" />
+        <result column="STNM" property="stnm" />
+        <result column="RowId" property="index" />
+        <result column="MA_Q" property="maq" />
+        <result column="MA_Z" property="maz" />
+        <result column="MWQ" property="mwq" />
+        <result column="TM" property="tm" />
+    </resultMap>
 
     <!--查询实时监测数据-->
     <select id="selectStCanalR1Info" parameterType="com.example.table.pojo.WaterParam" resultMap="StCanalRResultMap">
@@ -113,7 +124,7 @@
     <!--实时日水量数据-->
     <select id="selectDCanalCInfo" parameterType="com.example.table.pojo.WaterParam" resultMap="StDCanalCResultMap">
         select b.STCD,b.STNM,r.TM,r.DA_Q,r.DA_Z,r.DWQ,ROW_NUMBER() OVER(Order by b.PX asc) AS RowId from
-        (select * from WATER_SITE_B where SYSSIGN='WX') b left join (select * from ST_DCanal_C where TM=#{dt}) r on b.STCD=r.STCD
+        (select * from WATER_SITE_B where SYSSIGN=#{showsign}) b left join (select * from ST_DCanal_C where TM=#{dt}) r on b.STCD=r.STCD
         <where>
             <if test="stnm!= null and stnm!= ''">
                 b.STNM like '%'+#{stnm}+'%'
@@ -142,6 +153,44 @@
             </if>
             <if test="begintime!= null and begintime!= ''and endtime!= null and endtime!= ''">
                 and TM &gt;= '${begintime}' and TM &lt;='${endtime}'
+            </if>
+        </where>
+        ) as b where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--实时月水量数据-->
+    <select id="selectMCananlCInfo" parameterType="com.example.table.pojo.WaterParam" resultMap="StMCanalCResultMap">
+        select b.STCD,b.STNM,convert(varchar,r.YR)+'-'+RIGHT('00'+convert(varchar,r.MON),2) as TM,r.MA_Q,r.MA_Z,r.MWQ,ROW_NUMBER() OVER(Order by b.PX asc) AS RowId from
+        (select * from WATER_SITE_B where SYSSIGN=#{showsign}) b left join (select * from ST_MCanal_C where YR=#{year} and MON=#{month}) r on b.STCD=r.STCD
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                b.STNM like '%'+#{stnm}+'%'
+            </if>
+        </where>
+    </select>
+    <!--历史月水量分析总记录数-->
+    <select id="selectMCananlCHisByCount" parameterType="com.example.table.pojo.WaterParam" resultType="java.lang.Integer">
+        select count(*) from ST_MCanal_C
+        <where>
+            <if test="stcd!= null and stcd!= ''">
+                STCD = #{stcd}
+            </if>
+            <if test="begintime!= null and begintime!= ''and endtime!= null and endtime!= ''">
+                and convert(varchar,YR)+'-'+RIGHT('00'+convert(varchar,MON),2) &gt;='${begintime}'
+                and convert(varchar,YR)+'-'+RIGHT('00'+convert(varchar,MON),2) &lt;='${endtime}'
+            </if>
+        </where>
+    </select>
+    <!--历史月水量分析分页-->
+    <select id="selectMCananlCHisByPage" parameterType="com.example.table.pojo.WaterParam" resultMap="StMCanalCResultMap">
+        select * from (select convert(varchar,YR)+'-'+RIGHT('00'+convert(varchar,MON),2) as TM,MA_Z,MA_Q,MWQ, ROW_NUMBER() OVER(Order by (yr*100+mon) ${sequence}) AS RowId
+        from ST_MCanal_C
+        <where>
+            <if test="stcd!= null and stcd!= ''">
+                STCD = #{stcd}
+            </if>
+            <if test="begintime!= null and begintime!= ''and endtime!= null and endtime!= ''">
+                and convert(varchar,YR)+'-'+RIGHT('00'+convert(varchar,MON),2) &gt;='${begintime}'
+                and convert(varchar,YR)+'-'+RIGHT('00'+convert(varchar,MON),2) &lt;='${endtime}'
             </if>
         </where>
         ) as b where RowId between #{begincount} and #{endcount}
