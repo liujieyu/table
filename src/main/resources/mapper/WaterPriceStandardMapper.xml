@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.table.mapper.WaterPriceStandardMapper">
 
-    <!-- 通用查询映射结果 -->
+    <!-- 执行水价标准通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.example.table.pojo.WaterPriceStandard">
         <id column="ID" property="id" />
         <result column="PRICEYR" property="priceyr" />
@@ -28,6 +28,7 @@
         <result column="SAVETHRPR" property="savethrpr" />
         <result column="CANALRATE" property="canalrate" />
     </resultMap>
+    <!--获取最新执行水价标准-->
     <select id="selectWaterPriceStandardNow" resultMap="BaseResultMap">
         select * from WATER_PRICE_STANDARD where PRICEYR=(select MAX(PRICEYR) from WATER_PRICE_STANDARD where PRICEYR&lt;=DATEPART(year,GETDATE()))
     </select>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.table.mapper.WaterFarmUsersMapper">
+
+    <!--农户用户办卡信息-->
+    <resultMap id="FarmUserResultMap" type="com.example.table.pojo.WaterFarmUsers">
+        <id column="ID" property="id" />
+        <result column="FARMCODE" property="farmcode" />
+        <result column="FARMNAME" property="farmname" />
+        <result column="CANALCODE" property="canalcode" />
+        <result column="AREA" property="area" />
+        <result column="CARDNUM" property="cardnum" />
+        <result column="CONTACTS" property="contacts" />
+        <result column="CONPHONE" property="conphone" />
+        <result column="CARDID" property="cardid" />
+        <result column="CARDDATE" property="carddate" />
+        <result column="SYSSIGN" property="syssign" />
+        <result column="ABLESIGN" property="ablesign" />
+    </resultMap>
+    <!-- 支渠用户信息 -->
+    <resultMap id="WaterSiteBResultMap" type="com.example.table.pojo.WaterSite">
+        <id column="ID" property="id" />
+        <result column="STCD" property="stcd" />
+        <result column="STNM" property="stnm" />
+        <result column="CANALCODE" property="canalcode" />
+        <result column="CANALNAME" property="canalname" />
+        <result column="SYSSIGN" property="syssign" />
+        <result column="PX" property="px" />
+        <result column="AREA" property="area" />
+    </resultMap>
+    <!--农户用户信息总记录数-->
+    <select id="selectFarmUserByCount" parameterType="com.example.table.pojo.WaterParam" resultType="java.lang.Integer">
+        select count(*) from WATER_FARM_USERS
+        <where>
+            <if test="showsign!= null and showsign!= ''">
+                and SYSSIGN=#{showsign}
+            </if>
+            <if test="stnm!= null and stnm!= ''">
+                and (FARMNAME like '%'+#{stnm}+'%' or CARDNUM like '%'+#{stnm}+'%')
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+                and CANALCODE=#{canalcode}
+            </if>
+            <if test="begintime!= null and begintime!= ''and endtime!= null and endtime!= ''">
+                and CARDDATE &gt;= '${begintime}' and CARDDATE &lt;='${endtime}'
+            </if>
+        </where>
+    </select>
+    <!--农户用户信息分页查询-->
+    <select id="selectFarmUserByPage" parameterType="com.example.table.pojo.WaterParam" resultMap="FarmUserResultMap">
+        select * from (select ID,FARMCODE,FARMNAME,b.CANALNAME as CANALCODE,u.AREA,CARDNUM,CONTACTS,CONPHONE,CARDID,Convert(varchar(16),CARDDATE,120) as CARDDATE,ABLESIGN,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId from
+        (select * from WATER_FARM_USERS where SYSSIGN=#{showsign}) u inner join (select CANALNAME,CANALCODE,PX from WATER_SITE_B where SYSSIGN=#{showsign}) b on u.CANALCODE=b.CANALCODE
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                and (FARMNAME like '%'+#{stnm}+'%' or CARDNUM like '%'+#{stnm}+'%')
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+                and u.CANALCODE=#{canalcode}
+            </if>
+            <if test="begintime!= null and begintime!= ''and endtime!= null and endtime!= ''">
+                and CARDDATE &gt;= '${begintime}' and CARDDATE &lt;='${endtime}'
+            </if>
+        </where>
+        ) as b where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--农户用户所在渠道信息-->
+    <select id="selectCanalInfo" parameterType="com.example.table.pojo.WaterParam" resultType="java.util.Map">
+        select CANALNAME as label,CANALCODE as value from WATER_SITE_B where SYSSIGN=#{showsign} order by PX
+    </select>
+    <!--判断农户用户编号是否存在-->
+    <select id="selectExistFarmCode" parameterType="java.lang.String" resultType="java.lang.Integer">
+        select count(*) from WATER_FARM_USERS where FARMCODE=#{farmcode}
+    </select>
+    <!--获取水协会干渠下所有支渠信息-->
+    <select id="selectAllCanalInfo" parameterType="java.lang.String" resultType="java.util.Map">
+        select Canal_Code as value,Canal_Name as label from WRP_IrrBTCanalSystem where Upper_Canal_Code=#{canalcode}
+    </select>
+    <!--获取水协会下所有支渠用户-->
+    <select id="selectCanalUser" parameterType="com.example.table.pojo.WaterParam" resultMap="WaterSiteBResultMap">
+        select ID,STCD,STNM,CANALCODE,CANALNAME,AREA,PX,ROW_NUMBER() OVER(Order by PX asc) AS RowId from WATER_SITE_B
+        <where>
+            <if test="showsign!= null and showsign!= ''">
+                and SYSSIGN=#{showsign}
+            </if>
+            <if test="stnm!= null and stnm!= ''">
+               and (STCD like '%'+#{stnm}+'%' or STNM like '%'+#{stnm}+'%')
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+               and CANALCODE=#{canalcode}
+            </if>
+        </where>
+    </select>
+    <!--判断支渠用户编号是否存在-->
+    <select id="selectCanalUserExist" parameterType="java.lang.String" resultType="java.lang.Integer">
+        select count(*) from WATER_SITE_B where STCD=#{stcd}
+    </select>
+</mapper>

@@ -13,6 +13,7 @@ public class WaterParam {
     private int tm;            //小时
     private int year;          //年
     private int month;         //月
+    private String canalcode;  //渠道编号
     //分页开始记录数
     private int begincount=1;
     //分页结束记录数
@@ -123,5 +124,13 @@ public class WaterParam {
 
     public void setMonth(int month) {
         this.month = month;
+    }
+
+    public String getCanalcode() {
+        return canalcode;
+    }
+
+    public void setCanalcode(String canalcode) {
+        this.canalcode = canalcode;
     }
 }

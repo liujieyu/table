@@ -20,37 +20,41 @@ public class WaterFarmUsers extends Model<WaterFarmUsers> {
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "ID", type = IdType.AUTO)
-    private Integer id;
+    private Integer id;                    //主键ID
 
     @TableField("FARMCODE")
-    private String farmcode;
+    private String farmcode;               //农户用户编号
 
     @TableField("FARMNAME")
-    private String farmname;
+    private String farmname;               //农户用户名
 
     @TableField("CANALCODE")
-    private String canalcode;
+    private String canalcode;              //渠道编号
 
     @TableField("AREA")
-    private Integer area;
+    private Integer area;                  //承包面积
 
     @TableField("CARDNUM")
-    private String cardnum;
+    private String cardnum;                //卡号
 
     @TableField("CONTACTS")
-    private String contacts;
+    private String contacts;               //办卡人
 
     @TableField("CONPHONE")
-    private String conphone;
+    private String conphone;               //联系方式
 
     @TableField("CARDID")
-    private String cardid;
+    private String cardid;                 //身份证号
 
     @TableField("CARDDATE")
-    private String carddate;
+    private String carddate;               //办卡时间
 
     @TableField("SYSSIGN")
-    private String syssign;
+    private String syssign;                //水协会标识
+
+    @TableField("ABLESIGN")
+    private int ablesign;                  //是否注销  0 注销 1 启用
+
 
 
     @Override
@@ -145,4 +149,13 @@ public class WaterFarmUsers extends Model<WaterFarmUsers> {
     public void setCarddate(String carddate) {
         this.carddate = carddate;
     }
+
+    public int getAblesign() {
+        return ablesign;
+    }
+
+    public void setAblesign(int ablesign) {
+        this.ablesign = ablesign;
+    }
+
 }
