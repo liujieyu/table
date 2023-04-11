@@ -28,8 +28,106 @@
         <result column="SAVETHRPR" property="savethrpr" />
         <result column="CANALRATE" property="canalrate" />
     </resultMap>
+    <!--支渠和农户用户水价水量标准-->
+    <resultMap id="StandardShowMap" type="com.example.table.pojo.PriceShow">
+        <result column="PRICEYR" property="priceyr" />
+        <result column="BASEWATER" property="basewater" />
+        <result column="FARMNAME" property="farmname" />
+        <result column="STNM" property="stnm" />
+        <result column="CANALNAME" property="canalname" />
+        <result column="AREA" property="area" />
+        <result column="ONEWATER" property="onewater" />
+        <result column="TWOATER" property="twowater" />
+        <result column="THRWATER" property="thrwater" />
+    </resultMap>
     <!--获取最新执行水价标准-->
     <select id="selectWaterPriceStandardNow" resultMap="BaseResultMap">
         select * from WATER_PRICE_STANDARD where PRICEYR=(select MAX(PRICEYR) from WATER_PRICE_STANDARD where PRICEYR&lt;=DATEPART(year,GETDATE()))
+    </select>
+    <!--支渠超额标准-->
+    <select id="selectCanalWaterAboveStandard" resultMap="BaseResultMap">
+        select PRICEYR,CANALRATE,CONVERT(INT,ROUND(BASEWATER/CANALRATE,0)) AS BASEWATER,ONELOLIM,(CONVERT(INT,ROUND(ONEUPLIM/CANALRATE,0))) as ONEUPLIM,(CONVERT(INT,ROUND(ONEUPLIM/CANALRATE,0))+1) as TWOLOLIM,(CONVERT(INT,ROUND(TWOUPLIM/CANALRATE,0))) AS TWOUPLIM,(CONVERT(INT,ROUND(TWOUPLIM/CANALRATE,0)+1)) AS THRLOLIM,(CONVERT(INT,ROUND(THRUPLIM/CANALRATE,0))) AS THRUPLIM from WATER_PRICE_STANDARD where PRICEYR=(select MAX(PRICEYR) from WATER_PRICE_STANDARD where PRICEYR &lt;=DATEPART(year,GETDATE()))
+    </select>
+    <!--支渠回购标准-->
+    <select id="selectCanalWaterBackStandard" resultMap="BaseResultMap">
+        select PRICEYR,CANALRATE,CONVERT(INT,ROUND(BASEWATER/CANALRATE,0)) AS BASEWATER,SAVEONELO,(CONVERT(INT,ROUND(SAVEONEUP/CANALRATE,0))) as SAVEONEUP,(CONVERT(INT,ROUND(SAVEONEUP/CANALRATE,0))+1) as SAVETWOLO,(CONVERT(INT,ROUND(SAVETWOUP/CANALRATE,0))) AS SAVETWOUP,(CONVERT(INT,ROUND(SAVETWOUP/CANALRATE,0)+1)) AS SAVETHRLO,(CONVERT(INT,ROUND(SAVETHRUP/CANALRATE,0))) AS SAVETHRUP from WATER_PRICE_STANDARD where PRICEYR=(select MAX(PRICEYR) from WATER_PRICE_STANDARD where PRICEYR &lt;=DATEPART(year,GETDATE()))
+    </select>
+    <!--支渠用户超额用水加价-->
+    <select id="selectCanalStandardShowAbove" parameterType="com.example.table.pojo.WaterParam" resultMap="StandardShowMap">
+        select STNM,CANALNAME,AREA,CONVERT(INT,ROUND(AREA*BASEWATER/CANALRATE,0)) AS BASEWATER,'0 - '+CONVERT(VARCHAR(20),(CONVERT(INT,ROUND(AREA*ONEUPLIM/CANALRATE,0)))) AS ONEWATER,CONVERT(VARCHAR(20),(CONVERT(INT,ROUND(AREA*ONEUPLIM/CANALRATE,0))+1))+' - '+CONVERT(VARCHAR(20),(CONVERT(INT,ROUND(AREA*TWOUPLIM/CANALRATE,0)))) AS TWOATER,CONVERT(VARCHAR(20),(CONVERT(INT,ROUND(AREA*TWOUPLIM/CANALRATE,0)+1)))+' - '+CONVERT(VARCHAR(20),(CONVERT(INT,ROUND(AREA*THRUPLIM/CANALRATE,0)))) AS THRWATER,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId from
+        (select STCD,STNM,CANALCODE,CANALNAME,AREA,PX from WATER_SITE_B where SYSSIGN=#{showsign}) b  cross join (select * from WATER_PRICE_STANDARD where PRICEYR=(select MAX(PRICEYR) from WATER_PRICE_STANDARD where PRICEYR &lt;=DATEPART(year,GETDATE()))) t
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                and STNM like '%'+#{stnm}+'%'
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+                and CANALCODE=#{canalcode}
+            </if>
+        </where>
+    </select>
+    <!--支渠用户节约用水回购-->
+    <select id="selectCanalStandardShowBack" parameterType="com.example.table.pojo.WaterParam" resultMap="StandardShowMap">
+        select STNM,CANALNAME,AREA,CONVERT(INT,ROUND(AREA*BASEWATER/CANALRATE,0)) AS BASEWATER,'0 - '+CONVERT(VARCHAR(20),(CONVERT(INT,ROUND(AREA*SAVEONEUP/CANALRATE,0)))) AS ONEWATER,CONVERT(VARCHAR(20),(CONVERT(INT,ROUND(AREA*SAVEONEUP/CANALRATE,0))+1))+' - '+CONVERT(VARCHAR(20),(CONVERT(INT,ROUND(AREA*SAVETWOUP/CANALRATE,0)))) AS TWOATER,CONVERT(VARCHAR(20),(CONVERT(INT,ROUND(AREA*SAVETWOUP/CANALRATE,0)+1)))+' - '+CONVERT(VARCHAR(20),(CONVERT(INT,ROUND(AREA*SAVETHRUP/CANALRATE,0)))) AS THRWATER,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId from
+        (select STCD,STNM,CANALCODE,CANALNAME,AREA,PX from WATER_SITE_B where SYSSIGN=#{showsign}) b  cross join (select * from WATER_PRICE_STANDARD where PRICEYR=(select MAX(PRICEYR) from WATER_PRICE_STANDARD where PRICEYR &lt;=DATEPART(year,GETDATE()))) t
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                and STNM like '%'+#{stnm}+'%'
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+                and CANALCODE=#{canalcode}
+            </if>
+        </where>
+    </select>
+    <!--农户用户超额标准-->
+    <select id="selectFarmWaterAboveStandard" resultMap="BaseResultMap">
+        select PRICEYR,BASEWATER,BASEPRICE,ONELOLIM,ONEUPLIM,ONEPRICE,TWOLOLIM,TWOUPLIM,TOWPRICE,THRLOLIM,THRUPLIM,THRPRICE from WATER_PRICE_STANDARD where PRICEYR=(select MAX(PRICEYR) from WATER_PRICE_STANDARD where PRICEYR &lt;=DATEPART(year,GETDATE()))
+    </select>
+    <!--农户用户回购标准-->
+    <select id="selectFarmWaterBackStandard" resultMap="BaseResultMap">
+        select PRICEYR,BASEWATER,BASEPRICE,SAVEONELO,SAVEONEUP,SAVEONEPR,SAVETWOLO,SAVETWOUP,SAVETWOPR,SAVETHRLO,SAVETHRLO,SAVETHRUP,SAVETHRPR from WATER_PRICE_STANDARD where PRICEYR=(select MAX(PRICEYR) from WATER_PRICE_STANDARD where PRICEYR &lt;=DATEPART(year,GETDATE()))
+    </select>
+    <!--农户用户超额用水加价(回购)总记录数-->
+    <select id="selectFarmStandardShowByCount" parameterType="com.example.table.pojo.WaterParam" resultType="java.lang.Integer">
+        select count(*) from WATER_FARM_USERS
+        <where>
+            and ABLESIGN=1
+            <if test="showsign!= null and showsign!= ''">
+                and SYSSIGN=#{showsign}
+            </if>
+            <if test="stnm!= null and stnm!= ''">
+                and FARMNAME like '%'+#{stnm}+'%'
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+                and CANALCODE=#{canalcode}
+            </if>
+        </where>
+    </select>
+    <!--农户用户超额用水加价分页查询-->
+    <select id="selectFarmStandardShowAboveByPage" parameterType="com.example.table.pojo.WaterParam" resultMap="StandardShowMap">
+        select * from (select FARMNAME,w.CANALNAME,AREA,AREA*BASEWATER AS BASEWATER,'0 - '+CONVERT(VARCHAR(20),AREA*ONEUPLIM) AS ONEWATER,CONVERT(VARCHAR(20),AREA*ONEUPLIM+1)+' - '+CONVERT(VARCHAR(20),AREA*TWOUPLIM) AS TWOATER,CONVERT(VARCHAR(20),AREA*TWOUPLIM+1)+' - '+CONVERT(VARCHAR(20),AREA*THRUPLIM) AS THRWATER,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId from
+        (select FARMCODE,FARMNAME,CANALCODE,AREA from WATER_FARM_USERS where SYSSIGN=#{showsign} AND ABLESIGN=1) b inner join (select CANALCODE,CANALNAME,PX from WATER_SITE_B where SYSSIGN=#{showsign}) w on b.CANALCODE=w.CANALCODE  cross join (select * from WATER_PRICE_STANDARD where PRICEYR=(select MAX(PRICEYR) from WATER_PRICE_STANDARD where PRICEYR &lt;=DATEPART(year,GETDATE()))) t
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                and FARMNAME like '%'+#{stnm}+'%'
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+                and b.CANALCODE=#{canalcode}
+            </if>
+        </where>
+        ) as x where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--农户用户节约用水回购分页查询-->
+    <select id="selectFarmStandardShowBackByPage" parameterType="com.example.table.pojo.WaterParam" resultMap="StandardShowMap">
+        select * from (select FARMNAME,CANALNAME,AREA,AREA*BASEWATER AS BASEWATER,'0 - '+CONVERT(VARCHAR(20),AREA*SAVEONEUP) AS ONEWATER,CONVERT(VARCHAR(20),AREA*SAVEONEUP+1)+' - '+CONVERT(VARCHAR(20),AREA*SAVETWOUP) AS TWOATER,CONVERT(VARCHAR(20),AREA*SAVETWOUP+1)+' - '+CONVERT(VARCHAR(20),AREA*SAVETHRUP) AS THRWATER,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId from
+        (select FARMCODE,FARMNAME,CANALCODE,AREA from WATER_FARM_USERS where SYSSIGN=#{showsign} AND ABLESIGN=1) b inner join (select CANALCODE,CANALNAME,PX from WATER_SITE_B where SYSSIGN=#{showsign}) w on b.CANALCODE=w.CANALCODE  cross join (select * from WATER_PRICE_STANDARD where PRICEYR=(select MAX(PRICEYR) from WATER_PRICE_STANDARD where PRICEYR &lt;=DATEPART(year,GETDATE()))) t
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                and FARMNAME like '%'+#{stnm}+'%'
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+                and b.CANALCODE=#{canalcode}
+            </if>
+        </where>
+        ) as x where RowId between #{begincount} and #{endcount}
     </select>
 </mapper>

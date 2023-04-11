@@ -23,7 +23,7 @@ public class SqlserverGenerator {
     //设置作者
     private static String authorName="sa";
     //这里是要生成的表名（如果全部要生成的话，这里注释掉）
-    private static String[] tablauthorNamees= {"Water_Price_Standard"};
+    private static String[] tablauthorNamees= {"Water_Authority"};
     //可以设置table前缀
     private static String prefix="ST_";
 
@@ -111,7 +111,7 @@ public class SqlserverGenerator {
         // 设置逻辑删除键（这个是逻辑删除的操作）
         strategy.setLogicDeleteFieldName("deleted");
         // TODO 指定生成的bean的数据库表名（如果全部生成，这里要注释掉）
-        strategy.setInclude("Water_Price_Standard");
+        strategy.setInclude("Water_Authority");
         strategy.setSuperEntityColumns("id");
         // 驼峰转连字符
         strategy.setControllerMappingHyphenStyle(true);

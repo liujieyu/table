@@ -1,5 +1,7 @@
 package com.example.table.service.impl;
 
+import com.example.table.pojo.PriceShow;
+import com.example.table.pojo.WaterParam;
 import com.example.table.pojo.WaterPriceStandard;
 import com.example.table.mapper.WaterPriceStandardMapper;
 import com.example.table.service.WaterPriceStandardService;
@@ -54,5 +56,41 @@ public class WaterPriceStandardServiceImpl extends ServiceImpl<WaterPriceStandar
     //删除执行水价标准
     public void deleteWaterPriceStandard(int id){
         waterPriceStandardMapper.deleteById(id);
+    }
+    //支渠超额标准
+    public List<WaterPriceStandard> selectCanalWaterAboveStandard(){
+        return waterPriceStandardMapper.selectCanalWaterAboveStandard();
+    }
+    //支渠回购标准
+    public List<WaterPriceStandard> selectCanalWaterBackStandard(){
+        return waterPriceStandardMapper.selectCanalWaterBackStandard();
+    }
+    //农户用户超额标准
+    public List<WaterPriceStandard> selectFarmWaterAboveStandard(){
+        return waterPriceStandardMapper.selectFarmWaterAboveStandard();
+    }
+    //农户用户回购标准
+    public List<WaterPriceStandard> selectFarmWaterBackStandard(){
+        return waterPriceStandardMapper.selectFarmWaterBackStandard();
+    }
+    //支渠用户超额用水加价
+    public List<PriceShow> selectCanalStandardShowAbove(WaterParam waterParam){
+        return waterPriceStandardMapper.selectCanalStandardShowAbove(waterParam);
+    }
+    //支渠用户节约用水回购
+    public List<PriceShow> selectCanalStandardShowBack(WaterParam waterParam){
+        return waterPriceStandardMapper.selectCanalStandardShowBack(waterParam);
+    }
+    //农户用户超额用水加价(回购)总记录数
+    public Integer selectFarmStandardShowByCount(WaterParam waterParam){
+        return waterPriceStandardMapper.selectFarmStandardShowByCount(waterParam);
+    }
+    //农户用户超额用水加价分页查询
+    public List<PriceShow> selectFarmStandardShowAboveByPage(WaterParam waterParam){
+        return waterPriceStandardMapper.selectFarmStandardShowAboveByPage(waterParam);
+    }
+    //农户用户节约用水回购分页查询
+    public List<PriceShow> selectFarmStandardShowBackByPage(WaterParam waterParam){
+        return waterPriceStandardMapper.selectFarmStandardShowBackByPage(waterParam);
     }
 }
