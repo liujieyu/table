@@ -31,7 +31,7 @@ public class WaterAuthority extends Model<WaterAuthority> {
     private String loginpass;
 
     @TableField("CREATETIME")
-    private LocalDateTime createtime;
+    private String createtime;
 
     @TableField("SYSSIGN")
     private String syssign;
@@ -64,11 +64,11 @@ public class WaterAuthority extends Model<WaterAuthority> {
         this.loginpass = loginpass;
     }
 
-    public LocalDateTime getCreatetime() {
+    public String getCreatetime() {
         return createtime;
     }
 
-    public void setCreatetime(LocalDateTime createtime) {
+    public void setCreatetime(String createtime) {
         this.createtime = createtime;
     }
 

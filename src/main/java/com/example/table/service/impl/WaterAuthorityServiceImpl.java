@@ -46,4 +46,14 @@ public class WaterAuthorityServiceImpl extends ServiceImpl<WaterAuthorityMapper,
     public void deleteWaterAuthority(String ids){
         waterAuthorityMapper.deleteBatchIds(Arrays.asList(ids.split(",")));
     }
+    //判断登录账号是否存在(用户名密码是否存在)
+    public Integer selectWaterAuthorityCount(WaterParam waterParam){
+        QueryWrapper<WaterAuthority> queryWrapper = new QueryWrapper();
+        queryWrapper.eq("SYSSIGN",waterParam.getShowsign());
+        queryWrapper.eq("LOGINNAME",waterParam.getLoginname());
+        if(waterParam.getLoginpass()!=null && !waterParam.getLoginpass().equals("")){
+            queryWrapper.eq("LOGINPASS",waterParam.getLoginpass());
+        }
+        return waterAuthorityMapper.selectCount(queryWrapper);
+    }
 }

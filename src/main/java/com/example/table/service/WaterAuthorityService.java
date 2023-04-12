@@ -23,4 +23,6 @@ public interface WaterAuthorityService extends IService<WaterAuthority> {
     void updateWaterAuthority(WaterAuthority pojo);
     //删除权限信息
     void deleteWaterAuthority(String ids);
+    //判断登录账号是否存在
+    Integer selectWaterAuthorityCount(WaterParam waterParam);
 }

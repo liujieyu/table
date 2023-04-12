@@ -15,6 +15,7 @@ public class WaterParam {
     private int month;         //月
     private String canalcode;  //渠道编号
     private String loginname;  //登录账号
+    private String loginpass;  //登录密码
     //分页开始记录数
     private int begincount=1;
     //分页结束记录数
@@ -141,5 +142,13 @@ public class WaterParam {
 
     public void setLoginname(String loginname) {
         this.loginname = loginname;
+    }
+
+    public String getLoginpass() {
+        return loginpass;
+    }
+
+    public void setLoginpass(String loginpass) {
+        this.loginpass = loginpass;
     }
 }

@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -49,5 +51,20 @@ public class WaterAuthorityController {
     public String delAuthority(String ids){
         waterAuthorityService.deleteWaterAuthority(ids);
         return "ok";
+    }
+    //判断登录账号是否存在(用户名密码是否存在)
+    @ResponseBody
+    @RequestMapping(value="/checkloginname",method = RequestMethod.GET)
+    public Map<String,Object> checkLoginName(WaterParam waterParam){
+        Integer existsign=waterAuthorityService.selectWaterAuthorityCount(waterParam);
+        Map<String,Object> map=new HashMap<>();
+        if(existsign>0){
+            map.put("checksign","yes");
+            map.put("warning","该登录账号已存在！");
+        }else{
+            map.put("checksign","no");
+            map.put("warning","用户名或者密码错误！");
+        }
+        return map;
     }
 }
