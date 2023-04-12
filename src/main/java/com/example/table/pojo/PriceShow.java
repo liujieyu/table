@@ -1,7 +1,7 @@
 package com.example.table.pojo;
 
 /**
- * 水价标准查询字段
+ * 支渠和农户水价标准查询字段
  */
 public class PriceShow {
     private Integer priceyr;     //定价年份
