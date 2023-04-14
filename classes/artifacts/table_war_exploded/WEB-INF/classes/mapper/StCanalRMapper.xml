@@ -46,7 +46,16 @@
         <result column="MWQ" property="mwq" />
         <result column="TM" property="tm" />
     </resultMap>
-
+    <!--支渠用户超水节水水量统计映射结果-->
+    <resultMap id="WaterPriceShowMap" type="com.example.table.pojo.WaterPriceShow">
+        <result column="STNM" property="stnm" />
+        <result column="BASEWATER" property="basewater" />
+        <result column="CANALNAME" property="canalname" />
+        <result column="AREA" property="area" />
+        <result column="ONEUPLIM" property="oneuplim" />
+        <result column="TWOUPLIM" property="twouplim" />
+        <result column="TOTALWATER" property="totalwater" />
+    </resultMap>
     <!--查询实时监测数据-->
     <select id="selectStCanalR1Info" parameterType="com.example.table.pojo.WaterParam" resultMap="StCanalRResultMap">
         select b.STCD,b.STNM,Convert(varchar(16),r.TM,120) as TM,r.Q,r.Z,WPTN,ROW_NUMBER() OVER(Order by b.PX asc) AS RowId from
@@ -194,5 +203,33 @@
             </if>
         </where>
         ) as b where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--支渠用户超水量统计-->
+    <select id="selectOverWaterInfoByTj" parameterType="com.example.table.pojo.WaterParam" resultMap="WaterPriceShowMap">
+        select STNM,CANALNAME,AREA,CONVERT(INT,ROUND(AREA*BASEWATER/CANALRATE,0)) AS BASEWATER,CONVERT(INT,ROUND(AREA*SAVEONEUP/CANALRATE,0)) AS ONEUPLIM,CONVERT(INT,ROUND(AREA*SAVETWOUP/CANALRATE,0)) AS TWOUPLIM,CONVERT(INT,ROUND(m.TOTALWATER,0)) as TOTALWATER,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId from
+        (select STCD,STNM,CANALCODE,CANALNAME,AREA,PX from WATER_SITE_B where SYSSIGN=#{showsign}) b  cross join (select * from WATER_PRICE_STANDARD where PRICEYR=(select MAX(PRICEYR) from WATER_PRICE_STANDARD where PRICEYR&lt;=#{year})) t
+        left join (select STCD,SUM(MWQ) as TOTALWATER from ST_MCanal_C where YR=#{year} group by STCD) m on b.STCD=m.STCD
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                STNM like '%'+#{stnm}+'%'
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+                and CANALCODE=#{canalcode}
+            </if>
+        </where>
+    </select>
+    <!--支渠用户节水量统计-->
+    <select id="selectBackWaterInfoByTj" parameterType="com.example.table.pojo.WaterParam" resultMap="WaterPriceShowMap">
+        select STNM,CANALNAME,AREA,CONVERT(INT,ROUND(AREA*BASEWATER/CANALRATE,0)) AS BASEWATER,CONVERT(INT,ROUND(AREA*SAVEONEUP/CANALRATE,0)) AS ONEUPLIM,CONVERT(INT,ROUND(AREA*SAVETWOUP/CANALRATE,0)) AS TWOUPLIM,CONVERT(INT,ROUND(m.TOTALWATER,0)) as TOTALWATER,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId from
+        (select STCD,STNM,CANALCODE,CANALNAME,AREA,PX from WATER_SITE_B where SYSSIGN=#{showsign}) b  cross join (select * from WATER_PRICE_STANDARD where PRICEYR=(select MAX(PRICEYR) from WATER_PRICE_STANDARD where PRICEYR &lt;=#{year})) t
+        left join (select STCD,SUM(MWQ) as TOTALWATER from ST_MCanal_C where YR=#{year} group by STCD) m on b.STCD=m.STCD
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                STNM like '%'+#{stnm}+'%'
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+                and CANALCODE=#{canalcode}
+            </if>
+        </where>
     </select>
 </mapper>

@@ -69,4 +69,64 @@ public class StCanalRServiceImpl extends ServiceImpl<StCanalRMapper, StChanalR> 
     public List<StMCanalC> selectMCananlCHisByPage(WaterParam waterParam){
         return stCanalRMapper.selectMCananlCHisByPage(waterParam);
     }
+    //支渠用户超水量统计
+    public List<WaterPriceShow> selectOverWaterInfoByTj(WaterParam waterParam){
+        List<WaterPriceShow> list=stCanalRMapper.selectOverWaterInfoByTj(waterParam);
+        for(int i=0;i<list.size();i++){
+            WaterPriceShow pojo=list.get(i);
+            if(pojo.getTotalwater()==null){
+                continue;
+            }
+            pojo.setOnewater(0);
+            pojo.setTwowater(0);
+            pojo.setThrwater(0);
+            int overwater=pojo.getTotalwater()-pojo.getBasewater();
+            if(overwater>0){
+                pojo.setTotalover(overwater);
+            }else{
+                pojo.setTotalover(0);
+            }
+            if(overwater>pojo.getTwouplim()){
+                pojo.setThrwater(overwater-pojo.getTwouplim());
+                pojo.setTwowater(pojo.getTwouplim()-pojo.getOneuplim());
+                pojo.setOnewater(pojo.getOneuplim());
+            }else if(overwater>pojo.getOneuplim()){
+                pojo.setTwowater(overwater-pojo.getOneuplim());
+                pojo.setOnewater(pojo.getOneuplim());
+            }else if(overwater>0){
+                pojo.setOnewater(overwater);
+            }
+        }
+        return list;
+    }
+    //支渠用户节水量统计
+    public List<WaterPriceShow> selectBackWaterInfoByTj(WaterParam waterParam){
+        List<WaterPriceShow> list=stCanalRMapper.selectBackWaterInfoByTj(waterParam);
+        for(int i=0;i<list.size();i++){
+            WaterPriceShow pojo=list.get(i);
+            if(pojo.getTotalwater()==null){
+                continue;
+            }
+            pojo.setOnewater(0);
+            pojo.setTwowater(0);
+            pojo.setThrwater(0);
+            int backwater=pojo.getBasewater()-pojo.getTotalwater();
+            if(backwater>0){
+                pojo.setTotalback(backwater);
+            }else{
+                pojo.setTotalback(0);
+            }
+            if(backwater>pojo.getTwouplim()){
+                pojo.setThrwater(backwater-pojo.getTwouplim());
+                pojo.setTwowater(pojo.getTwouplim()-pojo.getOneuplim());
+                pojo.setOnewater(pojo.getOneuplim());
+            }else if(backwater>pojo.getOneuplim()){
+                pojo.setTwowater(backwater-pojo.getOneuplim());
+                pojo.setOnewater(pojo.getOneuplim());
+            }else if(backwater>0){
+                pojo.setOnewater(backwater);
+            }
+        }
+        return list;
+    }
 }

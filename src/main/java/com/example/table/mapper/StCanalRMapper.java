@@ -37,4 +37,8 @@ public interface StCanalRMapper extends BaseMapper<StChanalR> {
     Integer selectMCananlCHisByCount(WaterParam waterParam);
     //历史月水量分析分页
     List<StMCanalC> selectMCananlCHisByPage(WaterParam waterParam);
+    //支渠用户超水量统计
+    List<WaterPriceShow> selectOverWaterInfoByTj(WaterParam waterParam);
+    //支渠用户节水量统计
+    List<WaterPriceShow> selectBackWaterInfoByTj(WaterParam waterParam);
 }

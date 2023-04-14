@@ -149,4 +149,16 @@ public class StCanalRController {
         List<StMCanalC> list=stCanalRService.selectMCananlCHisByPage(waterParam);
         return list;
     }
+    //支渠用户超水量统计
+    @ResponseBody
+    @RequestMapping(value="/canalwatershow",method = RequestMethod.GET)
+    public List<WaterPriceShow> getCanalWaterShow(WaterParam waterParam) {
+        return stCanalRService.selectOverWaterInfoByTj(waterParam);
+    }
+    //支渠用户节水量统计
+    @ResponseBody
+    @RequestMapping(value="/canalbackshow",method = RequestMethod.GET)
+    public List<WaterPriceShow> getCanalBackShow(WaterParam waterParam) {
+        return stCanalRService.selectBackWaterInfoByTj(waterParam);
+    }
 }
