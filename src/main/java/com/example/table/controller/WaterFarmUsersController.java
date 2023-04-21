@@ -142,4 +142,10 @@ public class WaterFarmUsersController {
         }
         return map;
     }
+    //获取农户用户信息下拉框
+    @ResponseBody
+    @RequestMapping(value="/getfarmlist",method = RequestMethod.GET)
+    public List<Map<String,Object>> getFarmInfoByQuery(WaterParam waterParam){
+        return waterFarmUsersService.selectFarmInfoByQuery(waterParam);
+    }
 }

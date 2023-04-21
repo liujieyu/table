@@ -34,9 +34,6 @@ public class WaterFarmUsers extends Model<WaterFarmUsers> {
     @TableField("AREA")
     private Integer area;                  //承包面积
 
-    @TableField("CARDNUM")
-    private String cardnum;                //卡号
-
     @TableField("CONTACTS")
     private String contacts;               //办卡人
 
@@ -132,14 +129,6 @@ public class WaterFarmUsers extends Model<WaterFarmUsers> {
 
     public void setFarmcode(String farmcode) {
         this.farmcode = farmcode;
-    }
-
-    public String getCardnum() {
-        return cardnum;
-    }
-
-    public void setCardnum(String cardnum) {
-        this.cardnum = cardnum;
     }
 
     public String getCarddate() {

@@ -9,7 +9,6 @@
         <result column="FARMNAME" property="farmname" />
         <result column="CANALCODE" property="canalcode" />
         <result column="AREA" property="area" />
-        <result column="CARDNUM" property="cardnum" />
         <result column="CONTACTS" property="contacts" />
         <result column="CONPHONE" property="conphone" />
         <result column="CARDID" property="cardid" />
@@ -36,7 +35,7 @@
                 and SYSSIGN=#{showsign}
             </if>
             <if test="stnm!= null and stnm!= ''">
-                and (FARMNAME like '%'+#{stnm}+'%' or CARDNUM like '%'+#{stnm}+'%')
+                and (FARMNAME like '%'+#{stnm}+'%' or FARMCODE like '%'+#{stnm}+'%')
             </if>
             <if test="canalcode!= null and canalcode!= ''">
                 and CANALCODE=#{canalcode}
@@ -48,11 +47,11 @@
     </select>
     <!--农户用户信息分页查询-->
     <select id="selectFarmUserByPage" parameterType="com.example.table.pojo.WaterParam" resultMap="FarmUserResultMap">
-        select * from (select ID,FARMCODE,FARMNAME,b.CANALNAME as CANALCODE,u.AREA,CARDNUM,CONTACTS,CONPHONE,CARDID,Convert(varchar(16),CARDDATE,120) as CARDDATE,ABLESIGN,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId from
+        select * from (select ID,FARMCODE,FARMNAME,b.CANALNAME as CANALCODE,u.AREA,CONTACTS,CONPHONE,CARDID,Convert(varchar(16),CARDDATE,120) as CARDDATE,ABLESIGN,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId from
         (select * from WATER_FARM_USERS where SYSSIGN=#{showsign}) u inner join (select CANALNAME,CANALCODE,PX from WATER_SITE_B where SYSSIGN=#{showsign}) b on u.CANALCODE=b.CANALCODE
         <where>
             <if test="stnm!= null and stnm!= ''">
-                and (FARMNAME like '%'+#{stnm}+'%' or CARDNUM like '%'+#{stnm}+'%')
+                and (FARMNAME like '%'+#{stnm}+'%' or FARMCODE like '%'+#{stnm}+'%')
             </if>
             <if test="canalcode!= null and canalcode!= ''">
                 and u.CANALCODE=#{canalcode}

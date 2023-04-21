@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.table.mapper.WaterRechargeMapper">
+
+    <!-- 充值信息通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.example.table.pojo.WaterRecharge">
+        <id column="ID" property="id" />
+        <result column="FARMCODE" property="farmcode" />
+        <result column="AMOUNT" property="amount" />
+        <result column="CREATETIME" property="createtime" />
+        <result column="BUYWATER" property="buywater" />
+        <result column="BASEWATER" property="basewater" />
+        <result column="BUYFIRST" property="buyfirst" />
+        <result column="BUYSECOND" property="buysecond" />
+        <result column="BUYTHIRD" property="buythird" />
+        <result column="LASTSURPLUS" property="lastsurplus" />
+        <result column="REMAINWATER" property="remainwater" />
+    </resultMap>
+    <!--农户用户执行水价标准映射结果-->
+    <resultMap id="FarmStandardMap" type="com.example.table.pojo.FarmStandardShow">
+        <result column="FARMNAME" property="farmname" />
+        <result column="CANALCODE" property="canalcode" />
+        <result column="AREA" property="area" />
+        <result column="BASEWATER" property="basewater" />
+        <result column="BASEPRICE" property="baseprice" />
+        <result column="ONEPRICE" property="oneprice" />
+        <result column="TOWPRICE" property="towprice" />
+        <result column="THRPRICE" property="thrprice" />
+        <result column="ONEUPLIM" property="oneuplim" />
+        <result column="TWOUPLIM" property="twouplim" />
+    </resultMap>
+    <!--获取农户用户执行水价标准信息-->
+    <select id="selectFarmStandardInfo" parameterType="com.example.table.pojo.WaterParam" resultMap="FarmStandardMap">
+        select FARMNAME,(select CANALNAME from WATER_SITE_B s where s.CANALCODE=b.CANALCODE) as CANALNAME,AREA,CONVERT(INT,AREA*BASEWATER) AS BASEWATER,CONVERT(INT,AREA*SAVEONEUP) AS ONEUPLIM,CONVERT(INT,AREA*SAVETWOUP) AS TWOUPLIM,t.BASEPRICE,t.ONEPRICE,t.TOWPRICE,t.THRPRICE from
+        (select FARMCODE,FARMNAME,CANALCODE,AREA from WATER_FARM_USERS where SYSSIGN=#{showsign} and FARMCODE=#{stcd}) b  cross join (select * from WATER_PRICE_STANDARD where PRICEYR=(select MAX(PRICEYR) from WATER_PRICE_STANDARD where PRICEYR &lt;=#{year})) t
+    </select>
+    <!--获取农户用户充值之前统计信息-->
+    <select id="selectFarmBuyWaterTatalInfo" parameterType="com.example.table.pojo.WaterParam" resultMap="BaseResultMap">
+        select sum(BUYWATER) as BUYWATER,sum(BASEWATER) as BASEWATER,sum(BUYFIRST) as BUYFIRST,sum(BUYSECOND) as BUYSECOND,sum(BUYTHIRD) as BUYTHIRD from WATER_RECHARGE where FARMCODE=#{stcd} and DATEPART(year,CREATETIME)=#{year}
+    </select>
+</mapper>

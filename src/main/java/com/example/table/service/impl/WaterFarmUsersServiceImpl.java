@@ -1,10 +1,10 @@
 package com.example.table.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.example.table.mapper.WaterMeterMapper;
 import com.example.table.mapper.WaterSiteBMapper;
-import com.example.table.pojo.WaterFarmUsers;
+import com.example.table.pojo.*;
 import com.example.table.mapper.WaterFarmUsersMapper;
-import com.example.table.pojo.WaterParam;
-import com.example.table.pojo.WaterSite;
 import com.example.table.service.WaterFarmUsersService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +28,8 @@ public class WaterFarmUsersServiceImpl extends ServiceImpl<WaterFarmUsersMapper,
     private WaterFarmUsersMapper waterFarmUsersMapper;
     @Autowired
     private WaterSiteBMapper waterSiteBMapper;
+    @Autowired
+    WaterMeterMapper waterMeterMapper;
     //农户用户信息总记录数
     public Integer selectFarmUserByCount(WaterParam waterParam){
         return waterFarmUsersMapper.selectFarmUserByCount(waterParam);
@@ -43,6 +45,20 @@ public class WaterFarmUsersServiceImpl extends ServiceImpl<WaterFarmUsersMapper,
     //新增农户用户信息
     public void insertFarmUser(WaterFarmUsers pojo){
         waterFarmUsersMapper.insert(pojo);
+        WaterMeter waterMeter=new WaterMeter();
+        waterMeter.setFarmcode(pojo.getFarmcode());
+        waterMeter.setWaternum(0);
+        waterMeter.setReadtime(pojo.getCarddate());
+        waterMeter.setWateryield(0);
+        waterMeter.setYieldbase(0);
+        waterMeter.setYieldfirst(0);
+        waterMeter.setYieldsecond(0);
+        waterMeter.setYieldthird(0);
+        waterMeter.setWaterrate(0.00);
+        waterMeter.setAvailable(0.00);
+        waterMeter.setSurplus(0);
+        waterMeter.setSyssign(pojo.getSyssign());
+        waterMeterMapper.insert(waterMeter);
     }
     //修改农户用户信息
     public void updateFarmUserById(WaterFarmUsers pojo){
@@ -87,5 +103,18 @@ public class WaterFarmUsersServiceImpl extends ServiceImpl<WaterFarmUsersMapper,
     //判断支渠用户编号是否存在
     public Integer selectCanalUserExist(String stcd){
         return waterFarmUsersMapper.selectCanalUserExist(stcd);
+    }
+    //获取农户用户信息下拉框
+    public List<Map<String,Object>> selectFarmInfoByQuery(WaterParam waterParam){
+        QueryWrapper<WaterFarmUsers> queryWrapper = new QueryWrapper();
+        queryWrapper.select("FARMCODE as value","FARMNAME as label")
+                .eq("SYSSIGN",waterParam.getShowsign())
+                .eq("ABLESIGN",1);
+        if(waterParam.getCanalcode()!=null && !waterParam.getCanalcode().equals("")){
+            queryWrapper.eq("CANALCODE",waterParam.getCanalcode());
+        }
+        queryWrapper.orderByAsc("FARMCODE");
+        List<Map<String, Object>> maps = waterFarmUsersMapper.selectMaps(queryWrapper);
+        return maps;
     }
 }

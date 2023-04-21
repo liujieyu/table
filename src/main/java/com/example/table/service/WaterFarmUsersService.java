@@ -47,4 +47,6 @@ public interface WaterFarmUsersService extends IService<WaterFarmUsers> {
     void deleteWaterSite(String ids);
     //判断支渠用户编号是否存在
     Integer selectCanalUserExist(String stcd);
+    //获取农户用户信息下拉框
+    List<Map<String,Object>> selectFarmInfoByQuery(WaterParam waterParam);
 }
