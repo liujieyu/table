@@ -29,6 +29,22 @@
         <result column="ONEUPLIM" property="oneuplim" />
         <result column="TWOUPLIM" property="twouplim" />
     </resultMap>
+    <!--充值信息查询映射结果-->
+    <resultMap id="RechargeShowMap" type="com.example.table.pojo.RechargeShow">
+        <result column="FARMNAME" property="farmname" />
+        <result column="AMOUNT" property="amount" />
+        <result column="CREATETIME" property="createtime" />
+        <result column="BUYWATER" property="buywater" />
+        <result column="BASEWATER" property="basewater" />
+        <result column="BUYFIRST" property="buyfirst" />
+        <result column="BUYSECOND" property="buysecond" />
+        <result column="BUYTHIRD" property="buythird" />
+        <result column="LASTSURPLUS" property="lastsurplus" />
+        <result column="REMAINWATER" property="remainwater" />
+        <result column="CANALNAME" property="canalname" />
+        <result column="AREA" property="area" />
+        <result column="RowId" property="index" />
+    </resultMap>
     <!--获取农户用户执行水价标准信息-->
     <select id="selectFarmStandardInfo" parameterType="com.example.table.pojo.WaterParam" resultMap="FarmStandardMap">
         select FARMNAME,(select CANALNAME from WATER_SITE_B s where s.CANALCODE=b.CANALCODE) as CANALNAME,AREA,CONVERT(INT,AREA*BASEWATER) AS BASEWATER,CONVERT(INT,AREA*SAVEONEUP) AS ONEUPLIM,CONVERT(INT,AREA*SAVETWOUP) AS TWOUPLIM,t.BASEPRICE,t.ONEPRICE,t.TOWPRICE,t.THRPRICE from
@@ -37,5 +53,40 @@
     <!--获取农户用户充值之前统计信息-->
     <select id="selectFarmBuyWaterTatalInfo" parameterType="com.example.table.pojo.WaterParam" resultMap="BaseResultMap">
         select sum(BUYWATER) as BUYWATER,sum(BASEWATER) as BASEWATER,sum(BUYFIRST) as BUYFIRST,sum(BUYSECOND) as BUYSECOND,sum(BUYTHIRD) as BUYTHIRD from WATER_RECHARGE where FARMCODE=#{stcd} and DATEPART(year,CREATETIME)=#{year}
+    </select>
+    <!--分页查询充值记录-->
+    <select id="selectRechargShowInfoByPage" parameterType="com.example.table.pojo.WaterParam" resultMap="RechargeShowMap">
+        select * from (select f.FARMNAME,f.AREA,b.CANALNAME,r.*,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId from
+        (select * from WATER_RECHARGE where SYSSIGN=#{showsign}) r inner join (select FARMCODE,FARMNAME,CANALCODE,AREA from WATER_FARM_USERS where SYSSIGN=#{showsign}) f
+        on r.FARMCODE=f.FARMCODE inner join (select CANALCODE,CANALNAME,PX from WATER_SITE_B where SYSSIGN=#{showsign}) b on f.CANALCODE=b.CANALCODE
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                and f.FARMNAME like '%'+#{stnm}+'%'
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+                and b.CANALCODE=#{canalcode}
+            </if>
+            <if test="begintime!= null and begintime!= ''and endtime!= null and endtime!= ''">
+                and  CREATETIME between #{begintime} and  #{endtime}
+            </if>
+        </where>
+        ) as x where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--充值记录总记录数-->
+    <select id="selectRechargShowInfoByCount" parameterType="com.example.table.pojo.WaterParam" resultType="java.lang.Integer">
+        select count(*) from
+        (select * from WATER_RECHARGE where SYSSIGN=#{showsign}) r inner join (select FARMCODE,FARMNAME,CANALCODE,AREA from WATER_FARM_USERS where SYSSIGN=#{showsign}) f
+        on r.FARMCODE=f.FARMCODE inner join (select * from WATER_SITE_B where SYSSIGN=#{showsign}) b on f.CANALCODE=b.CANALCODE
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                and f.FARMNAME like '%'+#{stnm}+'%'
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+                and b.CANALCODE=#{canalcode}
+            </if>
+            <if test="begintime!= null and begintime!= '' and endtime!= null and endtime!= ''">
+                and  CREATETIME between #{begintime} and  #{endtime}
+            </if>
+        </where>
     </select>
 </mapper>

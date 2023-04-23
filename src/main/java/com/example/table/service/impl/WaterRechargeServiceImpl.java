@@ -2,10 +2,7 @@ package com.example.table.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.table.mapper.WaterMeterMapper;
-import com.example.table.pojo.FarmStandardShow;
-import com.example.table.pojo.WaterMeter;
-import com.example.table.pojo.WaterParam;
-import com.example.table.pojo.WaterRecharge;
+import com.example.table.pojo.*;
 import com.example.table.mapper.WaterRechargeMapper;
 import com.example.table.service.WaterRechargeService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -325,5 +322,13 @@ public class WaterRechargeServiceImpl extends ServiceImpl<WaterRechargeMapper, W
         map.put("meterinfo",pojo);
         map.put("farminfo",standobj);
         return map;
+    }
+    //分页查询充值记录
+    public List<RechargeShow> selectRechargShowInfoByPage(WaterParam waterParam){
+        return waterRechargeMapper.selectRechargShowInfoByPage(waterParam);
+    }
+    //充值记录总记录数
+    public Integer selectRechargShowInfoByCount(WaterParam waterParam){
+        return waterRechargeMapper.selectRechargShowInfoByCount(waterParam);
     }
 }
