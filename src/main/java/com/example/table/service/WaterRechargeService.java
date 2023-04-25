@@ -1,9 +1,6 @@
 package com.example.table.service;
 
-import com.example.table.pojo.RechargeShow;
-import com.example.table.pojo.WaterMeter;
-import com.example.table.pojo.WaterParam;
-import com.example.table.pojo.WaterRecharge;
+import com.example.table.pojo.*;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
@@ -26,4 +23,10 @@ public interface WaterRechargeService extends IService<WaterRecharge> {
     List<RechargeShow> selectRechargShowInfoByPage(WaterParam waterParam);
     //充值记录总记录数
     Integer selectRechargShowInfoByCount(WaterParam waterParam);
+    //分页查询收费通知
+    List<MeterShow> selectMeterShowInfoByPage(WaterParam waterParam);
+    //收费通知总记录数
+    Integer selectMeterShowInfoByCount(WaterParam waterParam);
+    //充值统计信息
+    Map<String,Object> selectSumRecharge(WaterParam waterParam);
 }

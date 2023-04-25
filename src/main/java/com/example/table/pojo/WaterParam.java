@@ -24,6 +24,8 @@ public class WaterParam {
     private String orderBy="tm";
     //排序顺序
     private String sequence="desc";
+    //是否欠费
+    private int arrear;
     public String getStnm() {
         return stnm;
     }
@@ -150,5 +152,13 @@ public class WaterParam {
 
     public void setLoginpass(String loginpass) {
         this.loginpass = loginpass;
+    }
+
+    public int getArrear() {
+        return arrear;
+    }
+
+    public void setArrear(int arrear) {
+        this.arrear = arrear;
     }
 }

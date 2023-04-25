@@ -1,10 +1,7 @@
 package com.example.table.controller;
 
 
-import com.example.table.pojo.RechargeShow;
-import com.example.table.pojo.WaterMeter;
-import com.example.table.pojo.WaterParam;
-import com.example.table.pojo.WaterRecharge;
+import com.example.table.pojo.*;
 import com.example.table.service.WaterRechargeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -52,5 +49,25 @@ public class WaterRechargeController {
         map.put("total",count);
         map.put("rows",list);
         return map;
+    }
+    //收费通知查询
+    @ResponseBody
+    @RequestMapping(value="/getmetershow",method = RequestMethod.GET)
+    public Map getMetershow(WaterParam waterParam){
+        Integer count=waterRechargeService.selectMeterShowInfoByCount(waterParam);
+        List<MeterShow> list=new ArrayList<>();
+        if(count>0){
+            list=waterRechargeService.selectMeterShowInfoByPage(waterParam);
+        }
+        Map map=new HashMap();
+        map.put("total",count);
+        map.put("rows",list);
+        return map;
+    }
+    //充值统计查询
+    @ResponseBody
+    @RequestMapping(value="/getrechargetj",method = RequestMethod.GET)
+    public Map getWaterRechargeTj(WaterParam waterParam){
+        return waterRechargeService.selectSumRecharge(waterParam);
     }
 }

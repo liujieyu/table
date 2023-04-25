@@ -10,10 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <p>
@@ -330,5 +327,36 @@ public class WaterRechargeServiceImpl extends ServiceImpl<WaterRechargeMapper, W
     //充值记录总记录数
     public Integer selectRechargShowInfoByCount(WaterParam waterParam){
         return waterRechargeMapper.selectRechargShowInfoByCount(waterParam);
+    }
+    //分页查询收费通知
+    public List<MeterShow> selectMeterShowInfoByPage(WaterParam waterParam){
+        return waterRechargeMapper.selectMeterShowInfoByPage(waterParam);
+    }
+    //收费通知总记录数
+    public Integer selectMeterShowInfoByCount(WaterParam waterParam){
+        return waterRechargeMapper.selectMeterShowInfoByCount(waterParam);
+    }
+    //充值统计信息
+    public Map<String,Object> selectSumRecharge(WaterParam waterParam){
+        Integer count=waterRechargeMapper.selectSumRechargeByCount(waterParam);
+        List<RechargeShow> list=new ArrayList<>();
+        if(count>0){
+            list=waterRechargeMapper.selectSumRechargeByPage(waterParam);
+        }
+        QueryWrapper<WaterRecharge> queryWrapper=new QueryWrapper<>();
+        queryWrapper.select("SUM(AMOUNT) as AMOUNT","SUM(BUYWATER) as BUYWATER","SUM(BASEWATER) as BASEWATER","SUM(BUYFIRST) as BUYFIRST","SUM(BUYSECOND) as BUYSECOND","SUM(BUYTHIRD) as BUYTHIRD")
+         .eq("SYSSIGN",waterParam.getShowsign()).apply("DATEPART(year,CREATETIME)={0}",waterParam.getYear());
+        if(waterParam.getStnm()!=null && !waterParam.getStnm().equals("")){
+            queryWrapper.inSql("FARMCODE","select FARMCODE from WATER_FARM_USERS where SYSSIGN='"+waterParam.getShowsign()+"' and FARMNAME like '%"+waterParam.getStnm()+"%'");
+        }
+        if(waterParam.getCanalcode()!=null && !waterParam.getCanalcode().equals("")){
+            queryWrapper.inSql("FARMCODE","select FARMCODE from WATER_FARM_USERS where SYSSIGN='"+waterParam.getShowsign()+"' and CANALCODE ='"+waterParam.getCanalcode()+"'");
+        }
+        WaterRecharge sumobj=waterRechargeMapper.selectOne(queryWrapper);
+        Map<String,Object> map=new HashMap<>();
+        map.put("rechargesum",sumobj);
+        map.put("rows",list);
+        map.put("total",count);
+        return map;
     }
 }

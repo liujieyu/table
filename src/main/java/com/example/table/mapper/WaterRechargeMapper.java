@@ -1,9 +1,6 @@
 package com.example.table.mapper;
 
-import com.example.table.pojo.FarmStandardShow;
-import com.example.table.pojo.RechargeShow;
-import com.example.table.pojo.WaterParam;
-import com.example.table.pojo.WaterRecharge;
+import com.example.table.pojo.*;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.springframework.stereotype.Component;
 
@@ -27,4 +24,12 @@ public interface WaterRechargeMapper extends BaseMapper<WaterRecharge> {
     List<RechargeShow> selectRechargShowInfoByPage(WaterParam waterParam);
     //充值记录总记录数
     Integer selectRechargShowInfoByCount(WaterParam waterParam);
+    //分页查询收费通知
+    List<MeterShow> selectMeterShowInfoByPage(WaterParam waterParam);
+    //收费通知总记录数
+    Integer selectMeterShowInfoByCount(WaterParam waterParam);
+    //水费购买年度统计分页查询
+    List<RechargeShow> selectSumRechargeByPage(WaterParam waterParam);
+    //水费购买年度统计总记录数
+    Integer selectSumRechargeByCount(WaterParam waterParam);
 }
