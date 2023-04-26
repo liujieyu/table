@@ -63,6 +63,21 @@
         <result column="AVAILABLE" property="available" />
         <result column="SURPLUS" property="surplus" />
         <result column="PAYTIME" property="paytime" />
+        <result column="TOTALOVER" property="totalover" />
+    </resultMap>
+    <!--农户用户节水信息映射结果-->
+    <resultMap id="MeterBackShowMap" type="com.example.table.pojo.MeterBackShow">
+        <result column="FARMNAME" property="farmname" />
+        <result column="CANALNAME" property="canalname" />
+        <result column="AREA" property="area" />
+        <result column="RowId" property="index" />
+        <result column="WATERYIELD" property="wateryield" />
+        <result column="BASEWATER" property="basewater" />
+        <result column="SAVEONEUP" property="saveoneup" />
+        <result column="SAVEONEPR" property="saveonepr" />
+        <result column="SAVETWOUP" property="savetwoup" />
+        <result column="SAVETWOPR" property="savetwopr" />
+        <result column="SAVETHRPR" property="savethrpr" />
     </resultMap>
     <!--获取农户用户执行水价标准信息-->
     <select id="selectFarmStandardInfo" parameterType="com.example.table.pojo.WaterParam" resultMap="FarmStandardMap">
@@ -175,6 +190,66 @@
         select count(*) from
         (select FARMCODE,SUM(AMOUNT) as AMOUNT,SUM(BUYWATER) as BUYWATER,SUM(BASEWATER) as BASEWATER,SUM(BUYFIRST) as BUYFIRST,SUM(BUYSECOND) as BUYSECOND,SUM(BUYTHIRD) as BUYTHIRD from WATER_RECHARGE where SYSSIGN=#{showsign} and DATEPART(year,CREATETIME)=#{year} group by FARMCODE ) r inner join (select FARMCODE,FARMNAME,CANALCODE,AREA from WATER_FARM_USERS where SYSSIGN=#{showsign}) f
         on r.FARMCODE=f.FARMCODE inner join (select CANALCODE,CANALNAME,PX from WATER_SITE_B where SYSSIGN=#{showsign}) b on f.CANALCODE=b.CANALCODE
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                and f.FARMNAME like '%'+#{stnm}+'%'
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+                and b.CANALCODE=#{canalcode}
+            </if>
+        </where>
+    </select>
+    <!--农户用户超水信息分页查询-->
+    <select id="selectMeterSumByPage" parameterType="com.example.table.pojo.WaterParam" resultMap="MeterShowMap">
+        select * from (select f.FARMNAME,f.AREA,b.CANALNAME,r.*,(r.YIELDFIRST+r.YIELDSECOND+r.YIELDTHIRD) as TOTALOVER,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId from
+        (select FARMCODE,SUM(WATERRATE) as WATERRATE,SUM(WATERYIELD) as WATERYIELD,SUM(YIELDBASE) as YIELDBASE,SUM(YIELDFIRST) as YIELDFIRST,SUM(YIELDSECOND) as YIELDSECOND,SUM(YIELDTHIRD) as YIELDTHIRD from WATER_METER where SYSSIGN=#{showsign} and (DATEPART(year,READTIME)=#{year} AND DATEPART(MONTH,READTIME)>1 OR DATEPART(year,READTIME)=#{nextyear} and DATEPART(MONTH,READTIME)=1) group by FARMCODE) r inner join (select FARMCODE,FARMNAME,CANALCODE,AREA from WATER_FARM_USERS where SYSSIGN=#{showsign}) f
+        on r.FARMCODE=f.FARMCODE inner join (select CANALCODE,CANALNAME,PX from WATER_SITE_B where SYSSIGN=#{showsign}) b on f.CANALCODE=b.CANALCODE
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                and f.FARMNAME like '%'+#{stnm}+'%'
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+                and b.CANALCODE=#{canalcode}
+            </if>
+        </where>
+        ) as x where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--农户用户超水信息总记录数-->
+    <select id="selectMeterSumByCount" parameterType="com.example.table.pojo.WaterParam" resultType="java.lang.Integer">
+        select count(*) from
+        (select FARMCODE,SUM(WATERRATE) as WATERRATE,SUM(WATERYIELD) as WATERYIELD,SUM(YIELDBASE) as YIELDBASE,SUM(YIELDFIRST) as YIELDFIRST,SUM(YIELDSECOND) as YIELDSECOND,SUM(YIELDTHIRD) as YIELDTHIRD from WATER_METER where SYSSIGN=#{showsign} and (DATEPART(year,READTIME)=#{year} AND DATEPART(MONTH,READTIME)>1 OR DATEPART(year,READTIME)=#{nextyear} and DATEPART(MONTH,READTIME)=1) group by FARMCODE) r inner join (select FARMCODE,FARMNAME,CANALCODE,AREA from WATER_FARM_USERS where SYSSIGN=#{showsign}) f
+        on r.FARMCODE=f.FARMCODE inner join (select CANALCODE,CANALNAME,PX from WATER_SITE_B where SYSSIGN=#{showsign}) b on f.CANALCODE=b.CANALCODE
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                and f.FARMNAME like '%'+#{stnm}+'%'
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+                and b.CANALCODE=#{canalcode}
+            </if>
+        </where>
+    </select>
+    <!--农户用户节水信息分页查询-->
+    <select id="selectMeterBackSumByPage" parameterType="com.example.table.pojo.WaterParam" resultMap="MeterBackShowMap">
+        select * from (select f.FARMNAME,f.AREA,b.CANALNAME,r.WATERYIELD,(t.BASEWATER*f.AREA) as BASEWATER,t.SAVEONEPR,(t.SAVEONEUP*f.AREA) as SAVEONEUP,t.SAVETWOPR,(t.SAVETWOUP*f.AREA) as SAVETWOUP,t.SAVETHRPR,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId from
+        (select FARMCODE,SUM(WATERYIELD) as WATERYIELD from WATER_METER where SYSSIGN=#{showsign} and (DATEPART(year,READTIME)=#{year} AND DATEPART(MONTH,READTIME)>1 OR DATEPART(year,READTIME)=#{nextyear} and DATEPART(MONTH,READTIME)=1) group by FARMCODE) r inner join (select FARMCODE,FARMNAME,CANALCODE,AREA from WATER_FARM_USERS where SYSSIGN=#{showsign}) f
+        on r.FARMCODE=f.FARMCODE inner join (select CANALCODE,CANALNAME,PX from WATER_SITE_B where SYSSIGN=#{showsign}) b on f.CANALCODE=b.CANALCODE
+        cross join (select * from WATER_PRICE_STANDARD where PRICEYR=(select MAX(PRICEYR) from WATER_PRICE_STANDARD where PRICEYR &lt;=DATEPART(year,GETDATE()))) t
+        <where>
+            <if test="stnm!= null and stnm!= ''">
+                and f.FARMNAME like '%'+#{stnm}+'%'
+            </if>
+            <if test="canalcode!= null and canalcode!= ''">
+                and b.CANALCODE=#{canalcode}
+            </if>
+        </where>
+        ) as x where RowId between #{begincount} and #{endcount}
+    </select>
+    <!--农户用户节水信息总记录数-->
+    <select id="selectMeterBackSumByCount" parameterType="com.example.table.pojo.WaterParam" resultType="java.lang.Integer">
+        select count(*) from
+        (select FARMCODE,SUM(WATERYIELD) as WATERYIELD from WATER_METER where SYSSIGN=#{showsign} and (DATEPART(year,READTIME)=#{year} AND DATEPART(MONTH,READTIME)>1 OR DATEPART(year,READTIME)=#{nextyear} and DATEPART(MONTH,READTIME)=1) group by FARMCODE) r inner join (select FARMCODE,FARMNAME,CANALCODE,AREA from WATER_FARM_USERS where SYSSIGN=#{showsign}) f
+        on r.FARMCODE=f.FARMCODE inner join (select CANALCODE,CANALNAME,PX from WATER_SITE_B where SYSSIGN=#{showsign}) b on f.CANALCODE=b.CANALCODE
+        cross join (select * from WATER_PRICE_STANDARD where PRICEYR=(select MAX(PRICEYR) from WATER_PRICE_STANDARD where PRICEYR &lt;=DATEPART(year,GETDATE()))) t
         <where>
             <if test="stnm!= null and stnm!= ''">
                 and f.FARMNAME like '%'+#{stnm}+'%'

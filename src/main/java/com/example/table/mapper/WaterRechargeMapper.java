@@ -32,4 +32,12 @@ public interface WaterRechargeMapper extends BaseMapper<WaterRecharge> {
     List<RechargeShow> selectSumRechargeByPage(WaterParam waterParam);
     //水费购买年度统计总记录数
     Integer selectSumRechargeByCount(WaterParam waterParam);
+    //农户用户超水信息分页查询
+    List<MeterShow> selectMeterSumByPage(WaterParam waterParam);
+    //农户用户超水信息总记录数
+    Integer selectMeterSumByCount(WaterParam waterParam);
+    //农户用户节水信息分页查询
+    List<MeterBackShow> selectMeterBackSumByPage(WaterParam waterParam);
+    //农户用户节水信息总记录数
+    Integer selectMeterBackSumByCount(WaterParam waterParam);
 }

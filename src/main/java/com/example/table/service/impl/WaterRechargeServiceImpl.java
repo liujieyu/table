@@ -1,6 +1,7 @@
 package com.example.table.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.example.table.mapper.WaterFarmUsersMapper;
 import com.example.table.mapper.WaterMeterMapper;
 import com.example.table.pojo.*;
 import com.example.table.mapper.WaterRechargeMapper;
@@ -26,6 +27,8 @@ public class WaterRechargeServiceImpl extends ServiceImpl<WaterRechargeMapper, W
     WaterRechargeMapper waterRechargeMapper;
     @Autowired
     WaterMeterMapper waterMeterMapper;
+    @Autowired
+    WaterFarmUsersMapper waterFarmUsersMapper;
 
     //水费充值
     public Map<String,Object> insertWaterRechargeInfo(WaterRecharge pojo){
@@ -73,7 +76,7 @@ public class WaterRechargeServiceImpl extends ServiceImpl<WaterRechargeMapper, W
                         pojo.setBuythird(buywater);
                     }//二级水量不为0
                     else if(sumobj.getBuysecond()>0){
-                        double twolimamount=standobj.getTowprice()*(standobj.getTwouplim()-sumobj.getBuysecond());
+                        double twolimamount=standobj.getTowprice()*(standobj.getTwouplim()-standobj.getOneuplim()-sumobj.getBuysecond());
                         //本次金额超过二级水量上限
                         if(pojo.getAmount()>twolimamount){
                             double thramount=pojo.getAmount()-twolimamount;
@@ -270,8 +273,8 @@ public class WaterRechargeServiceImpl extends ServiceImpl<WaterRechargeMapper, W
                 }else if(summeter.getYieldsecond()>0){
                     pojo.setYieldbase(0);
                     pojo.setYieldfirst(0);
-                    if(standobj.getTwouplim()<pojo.getWateryield()+summeter.getYieldsecond()){
-                        pojo.setYieldsecond(standobj.getTwouplim()-summeter.getYieldsecond());
+                    if((standobj.getTwouplim()-standobj.getOneuplim())<pojo.getWateryield()+summeter.getYieldsecond()){
+                        pojo.setYieldsecond(standobj.getTwouplim()-standobj.getOneuplim()-summeter.getYieldsecond());
                         pojo.setYieldthird(pojo.getWateryield()-pojo.getYieldsecond());
                         pojo.setWaterrate(standobj.getThrprice()*pojo.getYieldthird()+standobj.getTowprice()*pojo.getYieldsecond());
                     }else{
@@ -358,5 +361,147 @@ public class WaterRechargeServiceImpl extends ServiceImpl<WaterRechargeMapper, W
         map.put("rows",list);
         map.put("total",count);
         return map;
+    }
+    //农户用户超水信息查询
+    public Map<String,Object> selectMeterSumInfo(WaterParam waterParam){
+        Map<String, Object> map = new HashMap<>();
+        Integer count=waterRechargeMapper.selectMeterSumByCount(waterParam);
+        List<MeterShow> list=new ArrayList<>();
+        if(count>0){
+            list=waterRechargeMapper.selectMeterSumByPage(waterParam);
+        }
+        if(waterParam.isIssum()) {
+            QueryWrapper<WaterMeter> queryWrapper = new QueryWrapper<>();
+            queryWrapper.select("SUM(WATERRATE) as WATERRATE", "SUM(WATERYIELD) as WATERYIELD", "SUM(YIELDBASE) as YIELDBASE", "SUM(YIELDFIRST) as YIELDFIRST", "SUM(YIELDSECOND) as YIELDSECOND", "SUM(YIELDTHIRD) as YIELDTHIRD")
+                    .eq("SYSSIGN", waterParam.getShowsign()).apply("(DATEPART(year,READTIME)={0} AND DATEPART(MONTH,READTIME)>1 OR DATEPART(year,READTIME)={1} and DATEPART(MONTH,READTIME)=1)", waterParam.getYear(), waterParam.getNextyear());
+            if (waterParam.getStnm() != null && !waterParam.getStnm().equals("")) {
+                queryWrapper.inSql("FARMCODE", "select FARMCODE from WATER_FARM_USERS where SYSSIGN='" + waterParam.getShowsign() + "' and FARMNAME like '%" + waterParam.getStnm() + "%'");
+            }
+            if (waterParam.getCanalcode() != null && !waterParam.getCanalcode().equals("")) {
+                queryWrapper.inSql("FARMCODE", "select FARMCODE from WATER_FARM_USERS where SYSSIGN='" + waterParam.getShowsign() + "' and CANALCODE ='" + waterParam.getCanalcode() + "'");
+            }
+            WaterMeter sumobj = waterMeterMapper.selectOne(queryWrapper);
+            map.put("metersum", sumobj);
+            //累计承包面积
+            QueryWrapper<WaterFarmUsers> sumareaWarpper=new QueryWrapper<>();
+            sumareaWarpper.select("SUM(AREA) as AREA").eq("SYSSIGN", waterParam.getShowsign()).inSql("FARMCODE","select distinct FARMCODE from WATER_METER where SYSSIGN='"+waterParam.getShowsign()+"' and (DATEPART(year,READTIME)="+waterParam.getYear()+" AND DATEPART(MONTH,READTIME)>1 OR DATEPART(year,READTIME)="+waterParam.getNextyear()+" and DATEPART(MONTH,READTIME)=1)");
+            if (waterParam.getStnm() != null && !waterParam.getStnm().equals("")) {
+                sumareaWarpper.inSql("FARMCODE", "select FARMCODE from WATER_FARM_USERS where SYSSIGN='" + waterParam.getShowsign() + "' and FARMNAME like '%" + waterParam.getStnm() + "%'");
+            }
+            if (waterParam.getCanalcode() != null && !waterParam.getCanalcode().equals("")) {
+                sumareaWarpper.inSql("FARMCODE", "select FARMCODE from WATER_FARM_USERS where SYSSIGN='" + waterParam.getShowsign() + "' and CANALCODE ='" + waterParam.getCanalcode() + "'");
+            }
+            WaterFarmUsers areaobj=waterFarmUsersMapper.selectOne(sumareaWarpper);
+            if(areaobj==null){
+                map.put("areasum",0);
+            }else{
+                map.put("areasum",areaobj.getArea());
+            }
+
+        }
+        map.put("rows",list);
+        map.put("total",count);
+        return map;
+    }
+    //农户用户节水信息查询
+    public Map<String,Object> selectMeterBackSumInfo(WaterParam waterParam){
+        Map<String,Object> map=new HashMap<>();
+        Integer count=waterRechargeMapper.selectMeterBackSumByCount(waterParam);
+        List<MeterBackShow> list=new ArrayList<>();
+        MeterBackShow sumobj=new MeterBackShow();
+        if(count>0){
+            if(waterParam.getOrderBy().equals("TOTALWATER")){
+                waterParam.setOrderBy("(t.BASEWATER*f.AREA-WATERYIELD)");
+            }
+            if(waterParam.getOrderBy().equals("ONEWATER")){
+                waterParam.setOrderBy("(t.BASEWATER*f.AREA-WATERYIELD)");
+            }
+            if(waterParam.getOrderBy().equals("TWOWATER")){
+                waterParam.setOrderBy("(t.BASEWATER*f.AREA-WATERYIELD-t.SAVEONEUP*f.AREA)");
+            }
+            if(waterParam.getOrderBy().equals("THRIDWATER")){
+                waterParam.setOrderBy("(t.BASEWATER*f.AREA-WATERYIELD-t.SAVEONEUP*f.AREA-t.SAVETWOUP*f.AREA)");
+            }
+            if(waterParam.getOrderBy().equals("REALBASE")){
+                waterParam.setOrderBy("WATERYIELD");
+            }
+            if(waterParam.getOrderBy().equals("BACKAMOUNT")){
+                waterParam.setOrderBy("((t.BASEWATER*f.AREA-WATERYIELD-t.SAVEONEUP*f.AREA-t.SAVETWOUP*f.AREA)*t.SAVETHRPR+(t.BASEWATER*f.AREA-WATERYIELD-t.SAVEONEUP*f.AREA)*t.SAVETWOPR+(t.BASEWATER*f.AREA-WATERYIELD)*SAVEONEPR)");
+            }
+            list=waterRechargeMapper.selectMeterBackSumByPage(waterParam);
+            for(int i=0;i<list.size();i++){
+                MeterBackShow obj=list.get(i);
+                caculateback(obj);
+            }
+            if(waterParam.isIssum()) {
+                //累计信息
+                waterParam.setBegincount(1);
+                waterParam.setEndcount(9999999);
+                List<MeterBackShow> listsum = waterRechargeMapper.selectMeterBackSumByPage(waterParam);
+                for (int i = 0; i < listsum.size(); i++) {
+                    MeterBackShow obj = listsum.get(i);
+                    caculateback(obj);
+                    if (i == 0) {
+                        sumobj.setBackamount(obj.getBackamount());
+                        sumobj.setWateryield(obj.getWateryield());
+                        sumobj.setRealbase(obj.getRealbase());
+                        sumobj.setOnewater(obj.getOnewater());
+                        sumobj.setTwowater(obj.getTwowater());
+                        sumobj.setThridwater(obj.getThridwater());
+                        sumobj.setTotalwater(obj.getTotalwater());
+                        sumobj.setArea(obj.getArea());
+                    } else {
+                        sumobj.setBackamount(obj.getBackamount() + sumobj.getBackamount());
+                        sumobj.setWateryield(obj.getWateryield() + sumobj.getWateryield());
+                        sumobj.setRealbase(obj.getRealbase() + sumobj.getRealbase());
+                        sumobj.setOnewater(obj.getOnewater() + sumobj.getOnewater());
+                        sumobj.setTwowater(obj.getTwowater() + sumobj.getTwowater());
+                        sumobj.setThridwater(obj.getThridwater() + sumobj.getThridwater());
+                        sumobj.setTotalwater(obj.getTotalwater() + sumobj.getTotalwater());
+                        sumobj.setArea(obj.getArea()+sumobj.getArea());
+                    }
+                }
+            }
+        }
+        if(waterParam.isIssum()) {
+            map.put("backsum", sumobj);
+        }
+        map.put("rows",list);
+        map.put("total",count);
+        return map;
+    }
+    //计算回购价格
+    private void caculateback(MeterBackShow obj) {
+        Integer totalback=obj.getBasewater()-obj.getWateryield();
+        //未节水
+        if(totalback<0){
+            obj.setBackamount(0.00);
+            obj.setTotalwater(0);
+            obj.setOnewater(0);
+            obj.setTwowater(0);
+            obj.setThridwater(0);
+            obj.setRealbase(obj.getBasewater());
+         //节水
+        }else{
+            obj.setTotalwater(totalback);
+            obj.setRealbase(obj.getWateryield());
+            //三级节水
+            if(totalback>obj.getSavetwoup()){
+                obj.setThridwater(totalback-obj.getSavetwoup());
+                obj.setTwowater(obj.getSavetwoup()-obj.getSaveoneup());
+                obj.setOnewater(obj.getSaveoneup());
+             //二级节水
+            }else if(totalback>obj.getSaveoneup()){
+                obj.setThridwater(0);
+                obj.setTwowater(totalback-obj.getSaveoneup());
+                obj.setOnewater(obj.getSaveoneup());
+            }//一级节水
+            else{
+                obj.setThridwater(0);
+                obj.setTwowater(0);
+                obj.setOnewater(totalback);
+            }
+            obj.setBackamount(obj.getSavethrpr()*obj.getThridwater()+obj.getSavetwopr()*obj.getTwowater()+obj.getSaveonepr()*obj.getOnewater());
+        }
     }
 }

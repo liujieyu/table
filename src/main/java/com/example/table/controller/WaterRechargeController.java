@@ -70,4 +70,16 @@ public class WaterRechargeController {
     public Map getWaterRechargeTj(WaterParam waterParam){
         return waterRechargeService.selectSumRecharge(waterParam);
     }
+    //农户用户超水信息统计
+    @ResponseBody
+    @RequestMapping(value="/gemeteramount",method = RequestMethod.GET)
+    public Map getWaterMeterAmount(WaterParam waterParam){
+        return waterRechargeService.selectMeterSumInfo(waterParam);
+    }
+    //农户用户节水信息统计
+    @ResponseBody
+    @RequestMapping(value="/gemeterback",method = RequestMethod.GET)
+    public Map getWaterMeterBack(WaterParam waterParam){
+        return waterRechargeService.selectMeterBackSumInfo(waterParam);
+    }
 }

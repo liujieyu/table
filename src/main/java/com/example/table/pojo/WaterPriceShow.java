@@ -16,6 +16,7 @@ public class WaterPriceShow {
     private Integer twowater;    //二级超(节)水量
     private Integer thrwater;    //三级超(节)水量
     private Integer totalback;   //总节水量
+    private Integer realbase;    //实际毛供水量
 
     public String getStnm() {
         return stnm;
@@ -111,5 +112,13 @@ public class WaterPriceShow {
 
     public void setTotalback(Integer totalback) {
         this.totalback = totalback;
+    }
+
+    public Integer getRealbase() {
+        return realbase;
+    }
+
+    public void setRealbase(Integer realbase) {
+        this.realbase = realbase;
     }
 }

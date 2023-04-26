@@ -12,6 +12,7 @@ public class WaterParam {
     private String dt;         //日期
     private int tm;            //小时
     private int year;          //年
+    private int nextyear;      //下一年
     private int month;         //月
     private String canalcode;  //渠道编号
     private String loginname;  //登录账号
@@ -26,6 +27,8 @@ public class WaterParam {
     private String sequence="desc";
     //是否欠费
     private int arrear;
+    //是否重新统计
+    private boolean issum;
     public String getStnm() {
         return stnm;
     }
@@ -160,5 +163,21 @@ public class WaterParam {
 
     public void setArrear(int arrear) {
         this.arrear = arrear;
+    }
+
+    public int getNextyear() {
+        return nextyear;
+    }
+
+    public void setNextyear(int nextyear) {
+        this.nextyear = nextyear;
+    }
+
+    public boolean isIssum() {
+        return issum;
+    }
+
+    public void setIssum(boolean issum) {
+        this.issum = issum;
     }
 }

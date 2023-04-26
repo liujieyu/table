@@ -83,8 +83,10 @@ public class StCanalRServiceImpl extends ServiceImpl<StCanalRMapper, StChanalR> 
             int overwater=pojo.getTotalwater()-pojo.getBasewater();
             if(overwater>0){
                 pojo.setTotalover(overwater);
+                pojo.setRealbase(pojo.getBasewater());
             }else{
                 pojo.setTotalover(0);
+                pojo.setRealbase(pojo.getTotalwater());
             }
             if(overwater>pojo.getTwouplim()){
                 pojo.setThrwater(overwater-pojo.getTwouplim());
@@ -113,8 +115,10 @@ public class StCanalRServiceImpl extends ServiceImpl<StCanalRMapper, StChanalR> 
             int backwater=pojo.getBasewater()-pojo.getTotalwater();
             if(backwater>0){
                 pojo.setTotalback(backwater);
+                pojo.setRealbase(pojo.getTotalwater());
             }else{
                 pojo.setTotalback(0);
+                pojo.setRealbase(pojo.getTotalwater()-pojo.getBasewater());
             }
             if(backwater>pojo.getTwouplim()){
                 pojo.setThrwater(backwater-pojo.getTwouplim());
@@ -126,6 +130,7 @@ public class StCanalRServiceImpl extends ServiceImpl<StCanalRMapper, StChanalR> 
             }else if(backwater>0){
                 pojo.setOnewater(backwater);
             }
+
         }
         return list;
     }

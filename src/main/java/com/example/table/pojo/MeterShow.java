@@ -22,6 +22,7 @@ public class MeterShow {
     private Double available;             //可用余额
     private Integer surplus;              //剩余水量
     private String paytime;               //缴费时间
+    private Integer totalover;            //总超水量
 
     public Integer getIndex() {
         return index;
@@ -165,5 +166,13 @@ public class MeterShow {
 
     public void setPaytime(String paytime) {
         this.paytime = paytime;
+    }
+
+    public Integer getTotalover() {
+        return totalover;
+    }
+
+    public void setTotalover(Integer totalover) {
+        this.totalover = totalover;
     }
 }

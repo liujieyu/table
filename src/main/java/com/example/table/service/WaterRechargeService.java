@@ -29,4 +29,8 @@ public interface WaterRechargeService extends IService<WaterRecharge> {
     Integer selectMeterShowInfoByCount(WaterParam waterParam);
     //充值统计信息
     Map<String,Object> selectSumRecharge(WaterParam waterParam);
+    //农户用户超水信息查询
+    Map<String,Object> selectMeterSumInfo(WaterParam waterParam);
+    //农户用户节水信息查询
+    Map<String,Object> selectMeterBackSumInfo(WaterParam waterParam);
 }
