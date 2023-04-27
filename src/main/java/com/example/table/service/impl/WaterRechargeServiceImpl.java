@@ -33,8 +33,8 @@ public class WaterRechargeServiceImpl extends ServiceImpl<WaterRechargeMapper, W
     //水费充值
     public Map<String,Object> insertWaterRechargeInfo(WaterRecharge pojo){
         Date now= new Date();
-//        int nowyear=now.getYear();
-//        int nowmonth=now.getMonth()+1;
+        int nowyear=now.getYear();
+        int nowmonth=now.getMonth()+1;
         SimpleDateFormat sdf =   new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");
         pojo.setCreatetime(sdf.format(now));
         QueryWrapper<WaterMeter> queryWrapper=new QueryWrapper<>();
@@ -249,7 +249,7 @@ public class WaterRechargeServiceImpl extends ServiceImpl<WaterRechargeMapper, W
         }else{
             WaterRecharge recharge=rechargelist.get(0);
             //第一次查表
-            if(summeter.getWateryield()==0){
+            if(summeter==null || summeter.getWateryield()==0){
                 if(standobj.getBasewater()<pojo.getWateryield()){
                     pojo.setYieldbase(standobj.getBasewater());
                     pojo.setYieldfirst(pojo.getWateryield()-standobj.getBasewater());
@@ -261,8 +261,8 @@ public class WaterRechargeServiceImpl extends ServiceImpl<WaterRechargeMapper, W
                 }
                 pojo.setYieldsecond(0);
                 pojo.setYieldthird(0);
-                pojo.setAvailable(recharge.getAmount()-pojo.getWaterrate());
-                pojo.setSurplus(recharge.getBuywater()-pojo.getWateryield());
+                pojo.setAvailable(recharge.getAmount()-pojo.getWaterrate()+lastmeter.getAvailable());
+                pojo.setSurplus(recharge.getBuywater()-pojo.getWateryield()+lastmeter.getSurplus());
             }else{
                 if(summeter.getYieldthird()>0){
                     pojo.setYieldbase(0);
@@ -341,23 +341,40 @@ public class WaterRechargeServiceImpl extends ServiceImpl<WaterRechargeMapper, W
     }
     //充值统计信息
     public Map<String,Object> selectSumRecharge(WaterParam waterParam){
+        Map<String, Object> map = new HashMap<>();
         Integer count=waterRechargeMapper.selectSumRechargeByCount(waterParam);
         List<RechargeShow> list=new ArrayList<>();
         if(count>0){
             list=waterRechargeMapper.selectSumRechargeByPage(waterParam);
         }
-        QueryWrapper<WaterRecharge> queryWrapper=new QueryWrapper<>();
-        queryWrapper.select("SUM(AMOUNT) as AMOUNT","SUM(BUYWATER) as BUYWATER","SUM(BASEWATER) as BASEWATER","SUM(BUYFIRST) as BUYFIRST","SUM(BUYSECOND) as BUYSECOND","SUM(BUYTHIRD) as BUYTHIRD")
-         .eq("SYSSIGN",waterParam.getShowsign()).apply("DATEPART(year,CREATETIME)={0}",waterParam.getYear());
-        if(waterParam.getStnm()!=null && !waterParam.getStnm().equals("")){
-            queryWrapper.inSql("FARMCODE","select FARMCODE from WATER_FARM_USERS where SYSSIGN='"+waterParam.getShowsign()+"' and FARMNAME like '%"+waterParam.getStnm()+"%'");
+        if(waterParam.isIssum()) {
+            QueryWrapper<WaterRecharge> queryWrapper = new QueryWrapper<>();
+            queryWrapper.select("SUM(AMOUNT) as AMOUNT", "SUM(BUYWATER) as BUYWATER", "SUM(BASEWATER) as BASEWATER", "SUM(BUYFIRST) as BUYFIRST", "SUM(BUYSECOND) as BUYSECOND", "SUM(BUYTHIRD) as BUYTHIRD")
+                    .eq("SYSSIGN", waterParam.getShowsign()).apply("DATEPART(year,CREATETIME)={0}", waterParam.getYear());
+            if (waterParam.getStnm() != null && !waterParam.getStnm().equals("")) {
+                queryWrapper.inSql("FARMCODE", "select FARMCODE from WATER_FARM_USERS where SYSSIGN='" + waterParam.getShowsign() + "' and FARMNAME like '%" + waterParam.getStnm() + "%'");
+            }
+            if (waterParam.getCanalcode() != null && !waterParam.getCanalcode().equals("")) {
+                queryWrapper.inSql("FARMCODE", "select FARMCODE from WATER_FARM_USERS where SYSSIGN='" + waterParam.getShowsign() + "' and CANALCODE ='" + waterParam.getCanalcode() + "'");
+            }
+            WaterRecharge sumobj = waterRechargeMapper.selectOne(queryWrapper);
+            map.put("rechargesum", sumobj);
+            //累计承包面积
+            QueryWrapper<WaterFarmUsers> sumareaWarpper=new QueryWrapper<>();
+            sumareaWarpper.select("SUM(AREA) as AREA").eq("SYSSIGN", waterParam.getShowsign()).inSql("FARMCODE","select distinct FARMCODE from WATER_RECHARGE where SYSSIGN='"+waterParam.getShowsign()+"' and DATEPART(year,CREATETIME)="+waterParam.getYear());
+            if (waterParam.getStnm() != null && !waterParam.getStnm().equals("")) {
+                sumareaWarpper.inSql("FARMCODE", "select FARMCODE from WATER_FARM_USERS where SYSSIGN='" + waterParam.getShowsign() + "' and FARMNAME like '%" + waterParam.getStnm() + "%'");
+            }
+            if (waterParam.getCanalcode() != null && !waterParam.getCanalcode().equals("")) {
+                sumareaWarpper.inSql("FARMCODE", "select FARMCODE from WATER_FARM_USERS where SYSSIGN='" + waterParam.getShowsign() + "' and CANALCODE ='" + waterParam.getCanalcode() + "'");
+            }
+            WaterFarmUsers areaobj=waterFarmUsersMapper.selectOne(sumareaWarpper);
+            if(areaobj==null){
+                map.put("areasum",0);
+            }else{
+                map.put("areasum",areaobj.getArea());
+            }
         }
-        if(waterParam.getCanalcode()!=null && !waterParam.getCanalcode().equals("")){
-            queryWrapper.inSql("FARMCODE","select FARMCODE from WATER_FARM_USERS where SYSSIGN='"+waterParam.getShowsign()+"' and CANALCODE ='"+waterParam.getCanalcode()+"'");
-        }
-        WaterRecharge sumobj=waterRechargeMapper.selectOne(queryWrapper);
-        Map<String,Object> map=new HashMap<>();
-        map.put("rechargesum",sumobj);
         map.put("rows",list);
         map.put("total",count);
         return map;
