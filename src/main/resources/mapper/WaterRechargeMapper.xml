@@ -126,7 +126,7 @@
     <!--分页查询收费通知-->
     <select id="selectMeterShowInfoByPage" parameterType="com.example.table.pojo.WaterParam" resultMap="MeterShowMap">
         select * from (select f.FARMNAME,f.AREA,f.CONTACTS,f.CONPHONE,b.CANALNAME,r.*,ROW_NUMBER() OVER(Order by ${orderBy} ${sequence}) AS RowId from
-        (select * from WATER_METER where SYSSIGN=#{showsign}) r inner join (select FARMCODE,FARMNAME,CANALCODE,AREA,CONTACTS,CONPHONE from WATER_FARM_USERS where SYSSIGN=#{showsign}) f
+        (select * from WATER_METER where SYSSIGN=#{showsign} and WATERNUM>0) r inner join (select FARMCODE,FARMNAME,CANALCODE,AREA,CONTACTS,CONPHONE from WATER_FARM_USERS where SYSSIGN=#{showsign}) f
         on r.FARMCODE=f.FARMCODE inner join (select CANALCODE,CANALNAME,PX from WATER_SITE_B where SYSSIGN=#{showsign}) b on f.CANALCODE=b.CANALCODE
         <where>
             <if test="stnm!= null and stnm!= ''">
@@ -150,7 +150,7 @@
     <!--收费通知总记录数-->
     <select id="selectMeterShowInfoByCount" parameterType="com.example.table.pojo.WaterParam" resultType="java.lang.Integer">
         select count(*) from
-        (select * from WATER_METER where SYSSIGN=#{showsign}) r inner join (select FARMCODE,FARMNAME,CANALCODE,AREA,CONTACTS,CONPHONE from WATER_FARM_USERS where SYSSIGN=#{showsign}) f
+        (select * from WATER_METER where SYSSIGN=#{showsign} and WATERNUM>0) r inner join (select FARMCODE,FARMNAME,CANALCODE,AREA,CONTACTS,CONPHONE from WATER_FARM_USERS where SYSSIGN=#{showsign}) f
         on r.FARMCODE=f.FARMCODE inner join (select CANALCODE,CANALNAME,PX from WATER_SITE_B where SYSSIGN=#{showsign}) b on f.CANALCODE=b.CANALCODE
         <where>
             <if test="stnm!= null and stnm!= ''">

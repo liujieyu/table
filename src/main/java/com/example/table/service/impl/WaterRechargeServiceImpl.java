@@ -203,7 +203,7 @@ public class WaterRechargeServiceImpl extends ServiceImpl<WaterRechargeMapper, W
     //抄表
     public Map<String,Object> insertWaterMeterInfo(WaterMeter pojo){
         Date now= new Date();
-        int nowyear=now.getYear();
+        int nowyear=now.getYear()+1900;
         int nowmonth=now.getMonth()+1;
         SimpleDateFormat sdf =   new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");
         pojo.setReadtime(sdf.format(now));
@@ -238,7 +238,7 @@ public class WaterRechargeServiceImpl extends ServiceImpl<WaterRechargeMapper, W
         //获取该年份抄表累计水量值
         WaterMeter summeter=waterMeterMapper.selectOne(querysum);
         //未充值情况下查表
-        if(rechargelist==null || rechargelist.get(0)==null){
+        if(rechargelist==null || rechargelist.size()==0 || rechargelist.get(0)==null){
             pojo.setYieldbase(pojo.getWateryield());
             pojo.setYieldfirst(0);
             pojo.setYieldsecond(0);
