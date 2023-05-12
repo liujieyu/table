@@ -28,7 +28,7 @@ public interface WaterFarmUsersService extends IService<WaterFarmUsers> {
     //修改农户用户信息
     void updateFarmUserById(WaterFarmUsers pojo);
     //删除农户用户信息
-    void deleteFarmUserByIds(String ids);
+    void deleteFarmUserByIds(String ids,String farmcodes,int czsign);
     //查询渠道信息
     List<Map<String,Object>> selectCanalInfo(WaterParam waterParam);
     //判断农户用户编号是否存在
@@ -49,4 +49,6 @@ public interface WaterFarmUsersService extends IService<WaterFarmUsers> {
     Integer selectCanalUserExist(String stcd);
     //获取农户用户信息下拉框
     List<Map<String,Object>> selectFarmInfoByQuery(WaterParam waterParam);
+    //判断农户用户下是否存在充值或者抄表信息
+    Map checkExistFarmMenterOrRecharge(String farmcodes);
 }

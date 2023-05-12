@@ -62,11 +62,17 @@ public class WaterFarmUsersController {
         waterFarmUsersService.updateFarmUserById(pojo);
         return "ok";
     }
+    //农户用户是否存在充值或者抄表信息
+    @ResponseBody
+    @RequestMapping(value="/existfarmcodes",method = RequestMethod.GET)
+    public Map existFarmcodes(String farmcodes){
+        return waterFarmUsersService.checkExistFarmMenterOrRecharge(farmcodes);
+    }
     //删除农户用户信息
     @ResponseBody
     @RequestMapping(value="/delfarmuser",method = RequestMethod.GET)
-    public String deleteFarmUser(String ids){
-        waterFarmUsersService.deleteFarmUserByIds(ids);
+    public String deleteFarmUser(String ids,String farmcodes,int czsign){
+        waterFarmUsersService.deleteFarmUserByIds(ids,farmcodes,czsign);
         return "ok";
     }
     //获取渠道信息
