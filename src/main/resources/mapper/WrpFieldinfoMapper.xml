@@ -135,9 +135,9 @@
     <!--获取水库库容小时水量增量信息-->
     <select id="selectStRsvrHByToday" resultType="java.util.Map">
         select b.HW-a.Hw as HW,b.DT,b.TM from
-        (select * from st_rsvr_h where DT=CONVERT(varchar(10),getdate(),120) or (DT=CONVERT(varchar(10),getdate()-1,120) and tm=23)) a
+        (select ROW_NUMBER()OVER (ORDER BY ID ASC) as id,HW,DT,TM from st_rsvr_h where DT=CONVERT(varchar(10),getdate(),120) or (DT=CONVERT(varchar(10),getdate()-1,120) and tm=23)) a
         full join
-        (select * from st_rsvr_h where DT=CONVERT(varchar(10),getdate(),120) or (DT=CONVERT(varchar(10),getdate()-1,120) and tm=23)) b
+        (select ROW_NUMBER()OVER (ORDER BY ID ASC) as id, HW,DT,TM from st_rsvr_h where DT=CONVERT(varchar(10),getdate(),120) or (DT=CONVERT(varchar(10),getdate()-1,120) and tm=23)) b
         on a.id=b.id-1 where a.HW is not null and b.HW is not null
     </select>
     <!--河道水位2小时变化值-->

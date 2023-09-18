@@ -338,7 +338,7 @@ public class WrpFieldinfoServiceImpl extends ServiceImpl<WrpFieldinfoMapper, Wrp
         }
         //设置入库流量和入库水量
         //获取今日入库流量站小时信息
-        List<Map<String,Object>> riverlist=wrpFieldinfoMapper.selectStRiverHByToday();
+//        List<Map<String,Object>> riverlist=wrpFieldinfoMapper.selectStRiverHByToday();
         //获取水库小时库容增量信息
         List<Map<String,Object>> rsvrlist1=wrpFieldinfoMapper.selectStRsvrHByToday();
         List<Map<String,Object>> rsvrlist=new ArrayList<Map<String,Object>>();
@@ -371,14 +371,14 @@ public class WrpFieldinfoServiceImpl extends ServiceImpl<WrpFieldinfoMapper, Wrp
                 rsvrlist.add(obj1);
             }
         }
-        if(riverlist.size()<hour+1){
-            Map<String,Object> lastobj=new HashMap<String,Object>();
-            Map<String,Object> endobj=riverlist.get(riverlist.size()-1);
-            lastobj.put("DT",endobj.get("DT"));
-            lastobj.put("TM",hour);
-            lastobj.put("RZ",endobj.get("RZ"));
-            riverlist.add(lastobj);
-        }
+//        if(riverlist.size()<hour+1){
+//            Map<String,Object> lastobj=new HashMap<String,Object>();
+//            Map<String,Object> endobj=riverlist.get(riverlist.size()-1);
+//            lastobj.put("DT",endobj.get("DT"));
+//            lastobj.put("TM",hour);
+//            lastobj.put("RZ",endobj.get("RZ"));
+//            riverlist.add(lastobj);
+//        }
         if(rsvrlist.size()<hour+1){
             Map<String,Object> lastobj=new HashMap<String,Object>();
             Map<String,Object> endobj=rsvrlist.get(rsvrlist.size()-1);
@@ -387,9 +387,9 @@ public class WrpFieldinfoServiceImpl extends ServiceImpl<WrpFieldinfoMapper, Wrp
             lastobj.put("HW",endobj.get("HW"));
             rsvrlist.add(lastobj);
         }
-        for(int n=0;n<riverlist.size();n++){
-            Map<String,Object> riverobj=riverlist.get(n);
-            Double rz=((BigDecimal)riverobj.get("RZ")).doubleValue();
+        for(int n=0;n<rsvrlist.size();n++){
+            //Map<String,Object> riverobj=riverlist.get(n);
+            //Double rz=((BigDecimal)riverobj.get("RZ")).doubleValue();
             //未达到率定值
          //   if(rz<2710.95){
                 Map<String,Object> krobj=rsvrlist.get(n);
@@ -398,7 +398,7 @@ public class WrpFieldinfoServiceImpl extends ServiceImpl<WrpFieldinfoMapper, Wrp
                     curinw=0.00;
                 }
                 inwarray[n]=curinw;
-                if(n==riverlist.size()-2){
+                if(n==rsvrlist.size()-2){
                     Double curinq=curinw*10000/3600;
                     inq=curinq;
                     if(inq<0.00){
